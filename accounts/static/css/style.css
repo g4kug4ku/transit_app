@@ -1,0 +1,16 @@
+/* カスタムボタンのスタイル */
+.btn-eb6100 {
+    background-color: #EB6100;
+    color: white;
+    border-radius: 5px;
+}
+
+.btn-eb6100:hover {
+    background-color: #d45300;
+}
+
+/* カードのスタイル */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

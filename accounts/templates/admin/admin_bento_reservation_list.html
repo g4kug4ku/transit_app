@@ -1,0 +1,68 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<h1>弁当予約者一覧</h1>
+
+<!-- 日付選択フォーム -->
+<form method="GET">
+    <label for="selected_date">日付を選択:</label>
+    <input type="date" id="selected_date" name="selected_date" value="{{ selected_date }}">
+    <button type="submit">確認</button>
+</form>
+
+<!-- おかずとごはんの数量を表示 -->
+{% if selected_date %}
+    <h3>選択された日: {{ selected_date }}</h3>
+
+    <div>
+        <p>おかずの合計数: {{ side_dish_count }}</p>
+        <p>ごはん 100g の合計数: {{ rice_100g_count }}</p>
+        <p>ごはん 160g の合計数: {{ rice_160g_count }}</p>
+        <p>ごはん 200g の合計数: {{ rice_200g_count }}</p>
+    </div>
+
+
+    <!-- 予約者一覧 -->
+    {% if reservations %}
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th>姓</th>
+                    <th>名</th>
+                    <th>予約内容</th>
+                    <th>受け取り済み</th>
+                    <th>振替</th>
+                </tr>
+            </thead>
+        <form method="POST">
+            {% csrf_token %}
+            <tbody>
+                {% for reservation in reservations %}
+                <tr>
+                    <td>{{ reservation.user.first_name }}</td>
+                    <td>{{ reservation.user.last_name }}</td>
+                    <td>
+                        おかず: {{ reservation.side_dish|yesno:"あり,なし" }},
+                        ごはん: {% if reservation.rice %} {{ reservation.rice_gram }}g {% else %} なし {% endif %}
+                    </td>
+                    <td>{{ reservation.received|yesno:"はい,いいえ" }}</td>
+                    <td>
+                        <input type="text" name="transfer_user_{{ reservation.id }}" value="{{ reservation.transfer_user }}" />
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+            
+        </form>
+        </table>
+    {% else %}
+        <p>予約がありません。</p>
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+
+
+
+

@@ -1,0 +1,107 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">-弁当予約-</h1>
+
+    <!-- エラーメッセージ全体を表示 -->
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- 予約フォーム -->
+    <form method="POST">
+        {% csrf_token %}
+        
+        <!-- 日付選択フィールド（カレンダーから選択できるように修正） -->
+        <div class="mb-3">
+            <label for="reservation_date" class="form-label">日付を選択</label>
+            <input type="date" id="reservation_date" name="reservation_date" class="form-control" value="{{ form.reservation_date.value|default_if_none:'' }}">
+            
+            <!-- エラーメッセージを表示 -->
+            {% if form.reservation_date.errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.reservation_date.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- おかずチェックボックス -->
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="side_dish" name="side_dish">
+            <label for="side_dish" class="form-check-label">おかずを頼む</label>
+        </div>
+
+        <!-- ごはんチェックボックス -->
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="rice" name="rice">
+            <label for="rice" class="form-check-label">ごはんを頼む</label>
+        </div>
+
+        <!-- ごはんグラム数選択 -->
+        <div class="mb-3" id="rice-gram-selection" style="display: none;">
+            <label for="rice_gram" class="form-label">ごはんのグラム数を選ぶ</label>
+            <select name="rice_gram" id="rice_gram" class="form-select">
+                <option value="">選択してください</option>
+                <option value="100">100g</option>
+                <option value="160">160g</option>
+                <option value="200">200g</option>
+            </select>
+
+            <!-- エラーメッセージ -->
+            <div class="invalid-feedback">
+                ごはんを頼む場合、グラム数を選択してください。
+            </div>
+        </div>
+
+        <!-- 予約ボタン -->
+        <button type="submit" class="btn btn-primary" id="submit-btn" disabled>予約する</button>
+    </form>
+
+    <!-- 予約一覧リンク -->
+    <div class="mt-4">
+        <a href="{% url 'reservation_list' %}" class="btn btn-secondary">予約一覧</a>
+    </div>
+</div>
+
+<!-- JavaScript for form validation -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const riceCheckbox = document.getElementById('rice');
+        const riceGramSelection = document.getElementById('rice-gram-selection');
+        const submitButton = document.getElementById('submit-btn');
+        const sideDishCheckbox = document.getElementById('side_dish');
+        const riceGramSelect = document.getElementById('rice_gram');
+        
+        // ごはんにチェックが入った場合にグラム数選択を表示
+        riceCheckbox.addEventListener('change', function () {
+            riceGramSelection.style.display = riceCheckbox.checked ? 'block' : 'none';
+        });
+
+        // フォーム全体のバリデーション
+        const validateForm = () => {
+            const isRiceChecked = riceCheckbox.checked;
+            const isSideDishChecked = sideDishCheckbox.checked;
+            const isRiceGramSelected = riceGramSelect.value !== "";
+
+            // おかずもごはんも未選択の場合、またはごはんが選択されているのにグラム数が未選択の場合はボタンを無効化
+            if ((isRiceChecked && !isRiceGramSelected) || (!isRiceChecked && !isSideDishChecked)) {
+                submitButton.disabled = true;
+            } else {
+                submitButton.disabled = false;
+            }
+        };
+
+        // チェックボックスやセレクトボックスが変わった時にバリデーション
+        riceCheckbox.addEventListener('change', validateForm);
+        sideDishCheckbox.addEventListener('change', validateForm);
+        riceGramSelect.addEventListener('change', validateForm);
+    });
+</script>
+{% endblock %}

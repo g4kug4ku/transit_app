@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transit App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa; /* 背景色 */
+        }
+        .navbar {
+            background-color: transparent; /* ナビゲーションバーを透明に */
+            border-bottom: 1px solid #eb6100; /* 下にオレンジ色のボーダーを追加 */
+            justify-content: center; /* 全体を中央揃え */
+        }
+        .navbar-brand {
+            color: #EB6100;
+            font-size: 24px;
+            font-weight: bold;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%); /* 完全に中央に配置 */
+        }
+        .navbar-brand:hover {
+            color: #EB6100; /* ホバー時の文字色をオレンジ色に固定 */
+        }
+        .navbar-toggler {
+            border: none; /* ハンバーガーメニューのボーダーを削除 */
+            margin-left: auto; /* ハンバーガーメニューを右端に移動 */
+            outline: none; /* フォーカス時のアウトラインを削除 */
+            box-shadow: none; /* クリック時の黒い枠を削除 */
+        }
+        .navbar-toggler:focus {
+            outline: none; /* フォーカス時のアウトラインを削除 */
+            box-shadow: none; /* クリック時の黒い枠を削除 */
+        }
+        .navbar-toggler i {
+            font-size: 24px;
+            color: #EB6100; /* アイコンカラーをオレンジに設定 */
+        }
+        .offcanvas-header .btn-close {
+            color: #EB6100;
+        }
+        .btn-logout {
+            background-color: #EB6100;
+            color: white;
+            border-radius: 25px;
+            display: block;
+            margin: 0 auto;
+            width: fit-content; /* ボタン幅を文字幅に合わせる */
+            padding: 5px 20px; /* 余白を調整 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* ボタンに影を追加 */
+            border: none; /* 黒い淵を削除 */
+        }
+        .btn-logout:hover {
+            background-color: #d45300;
+        }
+        .offcanvas-body {
+            text-align: center; /* ログアウトボタンを中央揃え */
+        }
+        .text-center {
+            color: #000000;
+        }
+        #like-icon {
+            margin-left: 15px; /* Adjust the value to your preference */
+        }
+        .btn {
+            background-color: #EB6100;
+            color: white;
+        }
+        .comment-bubble {
+            background-color: #EB6100;
+            color: white;
+            border-radius: 15px;
+            padding: 10px;
+            max-width: 70%;
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light">
+        <div class="container-fluid">
+            <!-- 中央に配置されたブランド名 -->
+            <div class="navbar-brand">Transit App</div>
+            <!-- ハンバーガーメニュー -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenu" aria-controls="offcanvasMenu">
+                <i class="bi bi-list"></i> <!-- Bootstrap Iconsのリストアイコン -->
+            </button>
+        </div>
+    </nav>
+
+    <!-- Offcanvasメニュー -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
+        <div class="offcanvas-header">
+            <h5 id="offcanvasMenuLabel" class="text-center">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="list-unstyled">
+                <li><a href="{% url 'index' %}" class="text-dark">投稿一覧</a></li>
+                <li><a href="{% url 'bento_reservation' %}" class="text-dark">弁当予約</a></li>
+                {% if user.is_staff %}  <!-- 管理者の場合のみ表示 -->
+                <li><a href="{% url 'admin_bento_reservation_list' %}" class="nav-link">弁当予約者一覧</a></li>
+                {% endif %}
+            </ul>
+            <form method="POST" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">ログアウト</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        {% block content %}
+        {% endblock content %}
+        {% block detail %}
+        {% endblock detail %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

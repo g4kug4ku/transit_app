@@ -1,0 +1,34 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<h1 class="text-center">- 予約一覧 -</h1>
+
+<a href="{% url 'bento_reservation' %}" class="btn btn-primary">予約画面に戻る</a>
+
+<div class="reservation-cards">
+    {% for reservation in reservations %}
+        <hr>
+        <p>予約日：{{ reservation.reservation_date }}</p>
+        <p>おかず: {{ reservation.side_dish|yesno:"あり,なし" }},
+           ごはん: {% if reservation.rice %} {{ reservation.rice_gram }}g {% else %} なし {% endif %}
+        </p>
+
+        {% if reservation.can_cancel %}
+            <a href="{% url 'cancel_reservation' reservation.id %}" class="btn btn-danger">取消</a>
+        {% endif %}
+
+        {% if reservation.reservation_date == today %}
+            {% if not reservation.received %}
+                <form method="POST" action="{% url 'receive_bento' reservation.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">弁当受取</button>
+                </form>
+            {% else %}
+                <p class="text-success">受け取り済</p>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+</div>
+
+
+{% endblock %}

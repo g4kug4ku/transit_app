@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transit BBS トップページ</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css">
+    <style>
+        .post-card {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+        }
+        .btn-orange {
+            background-color: #EB6100;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .header {
+            background-color: #EB6100;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Transit BBS</h2>
+        <div>
+            {% if user.is_authenticated %}
+                <span>{{ user.username }}さん、こんにちは</span>
+                <a href="{% url 'logout' %}" class="btn btn-orange ml-3">ログアウト</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="container mt-5">
+        {% if user.is_authenticated %}
+            <h2>投稿一覧</h2>
+            {% for post in posts %}
+                <div class="post-card">
+                    <h3>{{ post.title }}</h3>
+                    <p>{{ post.date }}</p>
+                    <a href="{% url 'post_detail' post.id %}" class="btn btn-orange">詳細を見る</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <h2>ログインしてください</h2>
+            <a href="{% url 'login' %}" class="btn btn-orange">ログイン</a>
+        {% endif %}
+    </div>
+</body>
+</html>

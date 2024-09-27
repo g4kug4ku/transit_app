@@ -1,0 +1,63 @@
+{% extends 'accounts/base.html' %}
+
+{% block detail %}
+    <div class="container mt-4">
+        <a href="{% url 'index' %}" class="btn btn-eb6100 mb-3">←投稿一覧に戻る</a>
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">{{ post.title }}<i id="like-icon" class="bi {% if user in post.likes.all %}bi-heart-fill{% else %}bi-heart{% endif %}" 
+                    style="cursor: pointer; color: #eb6100" 
+                    data-post-slug="{{ post.slug }}">
+                </i></h3>
+                
+                <p class="card-text"><small class="text-muted">{{ post.created_at|date:"Y年m月d日 H:i" }}</small></p>
+                <p class="card-text">{{ post.content }}</p>
+                {% if post.attached_file %}
+                    <div class="mt-3">
+                        <a href="{{ decoded_file_url }}" class="btn btn-eb6100">添付ファイルを見る</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="comments-section mt-4">
+        <h5>コメント</h5>
+        <div>
+            {% for comment in comments %}
+            <div class="comment-bubble text-white bg-eb6100 p-3 mb-3 rounded float-start">
+                <strong>{{ comment.user.first_name }} {{ comment.user.last_name }}</strong>
+                <span class="text-muted">{{ comment.created_at|date:"Y年m月d日 H:i" }}</span>
+                <p>{{ comment.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="clearfix"></div>
+        <hr>
+        <h5>コメントを投稿する</h5>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-eb6100">送信</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('like-icon').addEventListener('click', function() {
+            const icon = this;
+            const postSlug = icon.getAttribute('data-post-slug');
+            
+            fetch(`/post/${postSlug}/like/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.liked) {
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                    } else {
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                    }
+                    // Optionally update the total likes count somewhere on the page
+                });
+        });
+    </script>
+{% endblock detail%}

@@ -1,0 +1,9 @@
+{% extends "transit_bbs/base.html" %} {% block content %}
+<h1 class="title">投稿一覧</h1>
+{% for post in posts %}
+<div class="box">
+  <h2 class="title">{{ post.title }}</h2>
+  <p>{{ post.pub_date }}</p>
+  <a href="{% url 'detail' post.id %}" class="button is-link">詳細を見る</a>
+</div>
+{% endfor %} {% endblock %}
