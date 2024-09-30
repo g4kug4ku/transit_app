@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-^*+y*1%&ezcup-i)s!=0$h10jsnndkw6rl1-w27*ymuoyr&(oh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['gakugaku.pythonanywhere.com', '127.0.0.1']
 
 
 # Application definition
@@ -115,6 +115,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+STATIC_ROOT = '/home/gakugaku/transit_app/static'
 
 STATIC_URL = 'static/'
 
