@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from django.contrib import messages
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 
 # Create your views here.
 def signup(request):
@@ -227,3 +229,20 @@ def create_reservation(request):
         form = BentoReservationForm()
 
     return render(request, 'bento_reservation.html', {'form': form})
+
+def generate_order_sheet(request):
+    selected_date = request.GET.get('selected_date', None)
+    side_dish_count = request.GET.get('side_dish_count', 0)
+    rice_100g_count = request.GET.get('rice_100g_count', 0)
+    rice_160g_count = request.GET.get('rice_160g_count', 0)
+    rice_200g_count = request.GET.get('rice_200g_count', 0)
+
+    context = {
+        'selected_date': selected_date,
+        'side_dish_count': side_dish_count,
+        'rice_100g_count': rice_100g_count,
+        'rice_160g_count': rice_160g_count,
+        'rice_200g_count': rice_200g_count,
+    }
+
+    return render(request, 'accounts/order_sheet.html', context)

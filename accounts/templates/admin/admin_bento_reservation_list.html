@@ -21,14 +21,22 @@
         <p>ごはん 200g の合計数: {{ rice_200g_count }}</p>
     </div>
 
+    <form action="{% url 'generate_order_sheet' %}" method="get">
+        <input type="hidden" name="selected_date" value="{{ selected_date }}">
+        <input type="hidden" name="side_dish_count" value="{{ side_dish_count }}">
+        <input type="hidden" name="rice_100g_count" value="{{ rice_100g_count }}">
+        <input type="hidden" name="rice_160g_count" value="{{ rice_160g_count }}">
+        <input type="hidden" name="rice_200g_count" value="{{ rice_200g_count }}">
+        <button type="submit" class="btn btn-primary">発注書作成</button>
+    </form>
 
     <!-- 予約者一覧 -->
     {% if reservations %}
         <table class="table mt-4">
             <thead>
                 <tr>
-                    <th>姓</th>
-                    <th>名</th>
+                    <th>氏名</th>
+                    <th>　</th>
                     <th>予約内容</th>
                     <th>受け取り済み</th>
                     <th>振替</th>

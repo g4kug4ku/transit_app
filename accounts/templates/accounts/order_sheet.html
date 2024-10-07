@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>食事発注書</title>
+    <style>
+        p {
+            line-height: 10px;
+        }
+        .info {
+            padding-top: 20px;
+        }
+        .howto {
+            padding-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 3px solid #333;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: center;
+        }
+        h2 {
+            text-align: center;
+        }
+        /* 右揃えのスタイルを追加 */
+        .right-align {
+            text-align: right;
+        }
+        @media print {
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>食事発注書</h2>
+
+    <!-- 右揃えにする部分 -->
+    <div class="right-align">
+        <p>就労移行支援事業所 トランジット</p>
+        <p>〒001-0017 北区北17条西4丁目1-3</p>
+        <p>マミヤビル201号室</p>
+        <p>TEL/FAX: 776-6152</p>
+    </div>
+
+    <p>まごころ弁当宛</p>
+    <p>下記の通り注文いたします。</p>
+    <p>2024年{{ selected_date }}分</p>
+
+    <table>
+        <tr>
+            <th>おかず</th>
+            <th colspan="3">ごはん</th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>100g</th>
+            <th>160g</th>
+            <th>200g</th>
+        </tr>
+        <tr>
+            <td>{{ side_dish_count }}</td>
+            <td>{{ rice_100g_count }}</td>
+            <td>{{ rice_160g_count }}</td>
+            <td>{{ rice_200g_count }}</td>
+        </tr>
+    </table>
+    <div class="howto">
+        <p>発注方法：</p>
+        <p>FAXの送信は19:00までとする</p>
+        <p>発注締め切り：</p>
+        <p>毎朝９時前後までにキャンセル分があれば電話にて個数を伝えキャンセルしてください</p>
+    </div>
+    
+    <p class="info">まごころ弁当：　FAX：214-1803　TEL：214-1802</p>
+
+    <button onclick="window.print()">印刷</button>
+</body>
+</html>
+

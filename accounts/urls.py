@@ -11,4 +11,5 @@ urlpatterns = [
     path('reservation/receive/<int:reservation_id>/', views.receive_bento, name='receive_bento'),
     path('cancel_reservation/<int:reservation_id>/', views.cancel_reservation, name='cancel_reservation'),
     path('admin_bento_reservation_list/', views.admin_bento_reservation_list, name='admin_bento_reservation_list'),
+    path('generate_order_sheet/', views.generate_order_sheet, name='generate_order_sheet'),
 ]
