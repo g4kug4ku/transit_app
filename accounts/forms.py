@@ -84,5 +84,10 @@ class BentoReservationForm(forms.ModelForm):
         # 予約日が過去の日付でないかのチェック (任意で追加)
         if reservation_date < date.today():
             raise ValidationError("過去の日付は予約できません。")
+        
+        # 未来の日付に既に予約があるか確認（当日の予約は許可）
+        if reservation_date > today:
+            if BentoReservation.objects.filter(user=user, reservation_date__gte=today).exclude(reservation_date=today).exists():
+                raise forms.ValidationError("既に未来の予約があります。新しい予約を行うには、前回の予約を取り消してください。")
 
         return reservation_date

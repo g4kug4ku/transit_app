@@ -50,7 +50,7 @@
 
     <p>まごころ弁当宛</p>
     <p>下記の通り注文いたします。</p>
-    <p>2024年{{ selected_date }}分</p>
+    <p>{{ date }}分</p>
 
     <table>
         <tr>
@@ -64,10 +64,10 @@
             <th>200g</th>
         </tr>
         <tr>
-            <td>{{ side_dish_count }}</td>
-            <td>{{ rice_100g_count }}</td>
-            <td>{{ rice_160g_count }}</td>
-            <td>{{ rice_200g_count }}</td>
+            <td>{{ side_dish }}</td>
+            <td>{{ rice_100g }}</td>
+            <td>{{ rice_160g }}</td>
+            <td>{{ rice_200g }}</td>
         </tr>
     </table>
     <div class="howto">

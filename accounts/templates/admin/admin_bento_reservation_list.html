@@ -1,73 +1,59 @@
 {% extends "accounts/base.html" %}
-
+{% load reservation_extras %}
 {% block content %}
 <h1>弁当予約者一覧</h1>
 
-<!-- 日付選択フォーム -->
 <form method="GET">
-    <label for="selected_date">日付を選択:</label>
-    <input type="date" id="selected_date" name="selected_date" value="{{ selected_date }}">
-    <button type="submit">確認</button>
+    <label for="start_date">開始日:</label>
+    <input type="date" id="start_date" name="start_date" required>
+    
+    <label for="end_date">終了日:</label>
+    <input type="date" id="end_date" name="end_date" required>
+    
+    <button type="submit">検索</button>
 </form>
 
-<!-- おかずとごはんの数量を表示 -->
-{% if selected_date %}
-    <h3>選択された日: {{ selected_date }}</h3>
-
-    <div>
-        <p>おかずの合計数: {{ side_dish_count }}</p>
-        <p>ごはん 100g の合計数: {{ rice_100g_count }}</p>
-        <p>ごはん 160g の合計数: {{ rice_160g_count }}</p>
-        <p>ごはん 200g の合計数: {{ rice_200g_count }}</p>
-    </div>
-
-    <form action="{% url 'generate_order_sheet' %}" method="get">
-        <input type="hidden" name="selected_date" value="{{ selected_date }}">
-        <input type="hidden" name="side_dish_count" value="{{ side_dish_count }}">
-        <input type="hidden" name="rice_100g_count" value="{{ rice_100g_count }}">
-        <input type="hidden" name="rice_160g_count" value="{{ rice_160g_count }}">
-        <input type="hidden" name="rice_200g_count" value="{{ rice_200g_count }}">
-        <button type="submit" class="btn btn-primary">発注書作成</button>
-    </form>
-
-    <!-- 予約者一覧 -->
+<!-- 予約内容の表示 -->
+{% for date, reservations in reservations_by_date.items %}
+    <h3>{{ date|date:"Y年m月d日" }}</h3>
     {% if reservations %}
-        <table class="table mt-4">
-            <thead>
-                <tr>
-                    <th>氏名</th>
-                    <th>　</th>
-                    <th>予約内容</th>
-                    <th>受け取り済み</th>
-                    <th>振替</th>
-                </tr>
-            </thead>
-        <form method="POST">
-            {% csrf_token %}
-            <tbody>
-                {% for reservation in reservations %}
-                <tr>
-                    <td>{{ reservation.user.first_name }}</td>
-                    <td>{{ reservation.user.last_name }}</td>
-                    <td>
-                        おかず: {{ reservation.side_dish|yesno:"あり,なし" }},
-                        ごはん: {% if reservation.rice %} {{ reservation.rice_gram }}g {% else %} なし {% endif %}
-                    </td>
-                    <td>{{ reservation.received|yesno:"はい,いいえ" }}</td>
-                    <td>
-                        <input type="text" name="transfer_user_{{ reservation.id }}" value="{{ reservation.transfer_user }}" />
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
+        <ul>
+            <li>おかずの数: {{ side_dish_counts|get_item:date }}</li>
+            <li>ごはん 100g: {{ rice_100g_counts|get_item:date }}</li>
+            <li>ごはん 160g: {{ rice_160g_counts|get_item:date }}</li>
+            <li>ごはん 200g: {{ rice_200g_counts|get_item:date }}</li>
+        </ul>
+    
+        <div class="text-center">
+            <a href="{% url 'generate_order_sheet' %}?date={{ date }}&side_dish={{ side_dish_counts|get_item:date }}&rice_100g={{ rice_100g_counts|get_item:date }}&rice_160g={{ rice_160g_counts|get_item:date }}&rice_200g={{ rice_200g_counts|get_item:date }}" class="btn btn-warning">発注書作成</a>
+        </div>
 
-            
-        </form>
+        <h4>予約者一覧</h4>
+        <table class="table table-bordered table-striped">
+            <tr>
+                <th>氏名</th>
+                <th>予約内容</th>
+                <th>受取済</th>
+            </tr>
+            {% for reservation in reservations %}
+            <tr>
+                <td>{{ reservation.user.last_name }} {{ reservation.user.first_name }}</td>
+                <td>
+                    おかず: {% if reservation.side_dish %}あり{% else %}なし{% endif %}
+
+                    ごはん: {% if reservation.rice %}{{ reservation.rice_gram }}g{% else %}なし{% endif %}
+                </td>
+                <td>{% if reservation.received %}はい{% else %}いいえ{% endif %}</td>
+            </tr>
+            {% endfor %}
         </table>
     {% else %}
-        <p>予約がありません。</p>
+        <!-- 予約がない場合 -->
+        <p class="text-center text-muted">予約がありません。</p>
     {% endif %}
-{% endif %}
+    <hr>
+{% endfor %}
+
 {% endblock %}
 
 

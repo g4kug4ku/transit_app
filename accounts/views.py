@@ -96,9 +96,9 @@ def bento_reservation(request):
     if request.method == 'POST':
         form = BentoReservationForm(request.POST, request=request)  # requestを渡す
         if form.is_valid():
-            reservation = form.save(commit=False)  # commit=Falseで一旦保存を遅らせる
-            reservation.user = request.user  # 現在のユーザーを設定
-            reservation.save()  # データベースに保存
+            reservation = form.save(commit=False)
+            reservation.user = request.user
+            reservation.save()
             messages.success(request, "予約が完了しました。")
             return redirect('reservation_list')
     else:
@@ -155,66 +155,47 @@ def receive_bento(request, reservation_id):
     return redirect(reverse('reservation_list'))
 
 def admin_bento_reservation_list(request):
-    selected_date = request.GET.get('selected_date', None)
-    reservations = []
-    side_dish_count = 0
-    rice_100g_count = 0
-    rice_160g_count = 0
-    rice_200g_count = 0
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
 
-    unavailable_days = BentoUnavailableDay.objects.all()  # 予約不可日を取得
+    reservations_by_date = {}  # 日付ごとの予約内容を格納する辞書
 
-    if selected_date:
-        reservations = BentoReservation.objects.filter(reservation_date=selected_date)
-        # おかずとごはんの数量集計
-        side_dish_count = reservations.filter(side_dish=True).count()
-        rice_100g_count = reservations.filter(rice=True, rice_gram=100).count()
-        rice_160g_count = reservations.filter(rice=True, rice_gram=160).count()
-        rice_200g_count = reservations.filter(rice=True, rice_gram=200).count()
+    if start_date_str and end_date_str:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        # 指定された期間の予約を取得
+        for n in range((end_date - start_date).days + 1):
+            current_date = start_date + timedelta(n)
+            reservations = BentoReservation.objects.filter(reservation_date=current_date)
+            reservations_by_date[current_date] = reservations
+
+    # 各日の合計数を集計
+    side_dish_counts = {}
+    rice_100g_counts = {}
+    rice_160g_counts = {}
+    rice_200g_counts = {}
+
+    for date, reservations in reservations_by_date.items():
+        side_dish_counts[date] = reservations.filter(side_dish=True).count()
+        rice_100g_counts[date] = reservations.filter(rice=True, rice_gram=100).count()
+        rice_160g_counts[date] = reservations.filter(rice=True, rice_gram=160).count()
+        rice_200g_counts[date] = reservations.filter(rice=True, rice_gram=200).count()
 
     return render(request, 'admin/admin_bento_reservation_list.html', {
-        'reservations': reservations,
-        'selected_date': selected_date,
-        'side_dish_count': side_dish_count,
-        'rice_100g_count': rice_100g_count,
-        'rice_160g_count': rice_160g_count,
-        'rice_200g_count': rice_200g_count,
-        'unavailable_days': unavailable_days,  # 予約不可日をテンプレートに渡す
+        'reservations_by_date': reservations_by_date,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'side_dish_counts': side_dish_counts,
+        'rice_100g_counts': rice_100g_counts,
+        'rice_160g_counts': rice_160g_counts,
+        'rice_200g_counts': rice_200g_counts,
     })
 
 
 
-def admin_bento_reservation_list_view(request):
-    selected_date_str = request.GET.get('selected_date') or request.POST.get('selected_date')
-    reservations = []
-    side_dish_count = 0
-    rice_100g_count = 0
-    rice_160g_count = 0
-    rice_200g_count = 0
 
-    if selected_date_str:
-        try:
-            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
-            reservations = BentoReservation.objects.filter(reservation_date=selected_date)
 
-            # おかずとごはんの数量集計
-            side_dish_count = reservations.filter(side_dish=True).count()
-            rice_100g_count = reservations.filter(rice=True, rice_gram=100).count()
-            rice_160g_count = reservations.filter(rice=True, rice_gram=160).count()
-            rice_200g_count = reservations.filter(rice=True, rice_gram=200).count()
-
-        except ValueError:
-            selected_date = None
-
-    context = {
-        'reservations': reservations,
-        'selected_date': selected_date_str,
-        'side_dish_count': side_dish_count,
-        'rice_100g_count': rice_100g_count,
-        'rice_160g_count': rice_160g_count,
-        'rice_200g_count': rice_200g_count,
-    }
-    return render(request, 'accounts/admin_bento_reservation_list.html', context)
 
 def create_reservation(request):
     if request.method == 'POST':
@@ -231,18 +212,21 @@ def create_reservation(request):
     return render(request, 'bento_reservation.html', {'form': form})
 
 def generate_order_sheet(request):
-    selected_date = request.GET.get('selected_date', None)
-    side_dish_count = request.GET.get('side_dish_count', 0)
-    rice_100g_count = request.GET.get('rice_100g_count', 0)
-    rice_160g_count = request.GET.get('rice_160g_count', 0)
-    rice_200g_count = request.GET.get('rice_200g_count', 0)
+    side_dish = request.GET.get('side_dish', 0)
+    rice_100g = request.GET.get('rice_100g', 0)
+    rice_160g = request.GET.get('rice_160g', 0)
+    rice_200g = request.GET.get('rice_200g', 0)
+    date = request.GET.get('date', '')
 
+    # デバッグ用のプリント
+    print(f"おかず: {side_dish}, 100g: {rice_100g}, 160g: {rice_160g}, 200g: {rice_200g}")
+    
     context = {
-        'selected_date': selected_date,
-        'side_dish_count': side_dish_count,
-        'rice_100g_count': rice_100g_count,
-        'rice_160g_count': rice_160g_count,
-        'rice_200g_count': rice_200g_count,
+        'side_dish': side_dish,
+        'rice_100g': rice_100g,
+        'rice_160g': rice_160g,
+        'rice_200g': rice_200g,
+        'date': date,
     }
 
     return render(request, 'accounts/order_sheet.html', context)
