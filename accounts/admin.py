@@ -16,7 +16,7 @@ class PostAdmin(admin.ModelAdmin):
     
     # 既読ユーザーの「姓」と「名」を表示
     def get_read_users(self, obj):
-        return ", ".join([f"{user.first_name} {user.last_name}" for user in obj.read_by.all()])
+        return ", ".join([f"{user.last_name} {user.first_name}" for user in obj.read_by.all()])
     get_read_users.short_description = '既読ユーザー'
 
     
@@ -24,7 +24,7 @@ class PostAdmin(admin.ModelAdmin):
         return super().get_queryset(request).prefetch_related('likes')
 
     def liked_users(self, obj):
-        return ', '.join([f'{user.first_name} {user.last_name}' for user in obj.likes.all()])
+        return ', '.join([f'{user.last_name} {user.first_name}' for user in obj.likes.all()])
     liked_users.short_description = '興味ありユーザー'
     
     def has_new_comments(self, obj):
@@ -44,7 +44,7 @@ class CommentAdmin(admin.ModelAdmin):
         return super().get_readonly_fields(request, obj)
     
 class BentoReservationAdmin(admin.ModelAdmin):
-    list_display = ('user__first_name', 'user__last_name', 'reservation_date', 'side_dish', 'rice', 'rice_gram', 'received', 'transfer_user')
+    list_display = ('user__last_name', 'user__first_name', 'reservation_date', 'side_dish', 'rice', 'rice_gram', 'received', 'transfer_user')
     list_filter = ('reservation_date', 'received')
     search_fields = ('user__username', 'user__last_name', 'user__first_name', 'reservation_date', 'memo')
     ordering = ('-reservation_date',)

@@ -34,6 +34,7 @@
                 <th>氏名</th>
                 <th>予約内容</th>
                 <th>受取済</th>
+                <th>振替</th>
             </tr>
             {% for reservation in reservations %}
             <tr>
@@ -44,6 +45,7 @@
                     ごはん: {% if reservation.rice %}{{ reservation.rice_gram }}g{% else %}なし{% endif %}
                 </td>
                 <td>{% if reservation.received %}はい{% else %}いいえ{% endif %}</td>
+                <td>{{ reservation.transfer_user }}</td>
             </tr>
             {% endfor %}
         </table>
