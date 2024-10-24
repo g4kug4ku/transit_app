@@ -136,16 +136,16 @@ def reservation_list(request):
 def cancel_reservation(request, reservation_id):
     reservation = get_object_or_404(BentoReservation, id=reservation_id, user=request.user)
     
-    # 予約日の前日の15時を取得
+    # 予約日の前日の16時を取得
     cancel_deadline = reservation.reservation_date - timedelta(days=1)
-    cancel_deadline = datetime.combine(cancel_deadline, datetime.min.time()).replace(hour=15)
+    cancel_deadline = datetime.combine(cancel_deadline, datetime.min.time()).replace(hour=16)
 
     # 現在の日時が取り消し期限より前かを確認
     if datetime.now() < cancel_deadline:
         reservation.delete()  # 予約を取り消す
         messages.success(request, "予約を取り消しました。")
     else:
-        messages.error(request, "予約を取り消せるのは前日の15時までです。")
+        messages.error(request, "予約を取り消せるのは前日の16時までです。")
 
     return redirect('reservation_list')
 
