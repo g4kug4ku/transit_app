@@ -1,0 +1,48 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2>献立をアップロード</h2>
+
+        <!-- 献立のアップロードフォーム -->
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button type="submit" class="btn btn-primary" id="upload-btn" disabled>アップロード</button>
+        </form>
+
+        <!-- アップロード済みのメニュー一覧 -->
+        <h3 class="mt-5">アップロード済みの献立</h3>
+        <ul class="list-group">
+            {% for menu in menus %}
+                <li class="list-group-item">
+                    {{ menu.title }}
+                    <a href="{% url 'delete_menu' menu.id %}" class="btn btn-danger btn-sm float-end">削除</a>
+                </li>
+            {% empty %}
+                <li class="list-group-item">まだ献立がアップロードされていません。</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        // タイトルとファイルが選択されていないとボタンを無効にする
+        document.addEventListener('DOMContentLoaded', function () {
+            const uploadBtn = document.getElementById('upload-btn');
+            const titleInput = document.getElementById('id_title');
+            const fileInput = document.getElementById('id_file');
+
+            function toggleButton() {
+                if (titleInput.value && fileInput.files.length > 0) {
+                    uploadBtn.disabled = false;
+                } else {
+                    uploadBtn.disabled = true;
+                }
+            }
+
+            titleInput.addEventListener('input', toggleButton);
+            fileInput.addEventListener('change', toggleButton);
+        });
+    </script>
+{% endblock %}

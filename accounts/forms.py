@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Comment, BentoReservation, BentoUnavailableDay
+from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload
 from django.utils import timezone
 import jpholiday
 import datetime
@@ -91,3 +91,14 @@ class BentoReservationForm(forms.ModelForm):
                 raise forms.ValidationError("既に未来の予約があります。新しい予約を行うには、前回の予約を取り消してください。")
 
         return reservation_date
+
+class MenuUploadForm(forms.ModelForm):
+    class Meta:
+        model = MenuUpload
+        fields = ['title', 'file']
+
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        if not file:
+            raise forms.ValidationError("ファイルを選択してください。")
+        return file

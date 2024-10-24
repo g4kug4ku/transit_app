@@ -2,6 +2,19 @@
 
 {% block content %}
 <div class="container mt-5">
+    <!-- 献立リンク -->
+    {% if menus %}
+    <div class="mt-4">
+        <h4>献立</h4>
+        <ul>
+            {% for menu in menus %}
+                <li>
+                    <a href="{{ menu.file.url }}" target="_blank">{{ menu.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
     <h1 class="text-center">-弁当予約-</h1>
 
     <!-- エラーメッセージ全体を表示 -->
@@ -32,16 +45,22 @@
             {% endif %}
         </div>
 
-        <!-- おかずチェックボックス -->
+        <!-- おかずとごはんを頼むチェックボックス -->
         <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="side_dish" name="side_dish">
-            <label for="side_dish" class="form-check-label">おかずを頼む</label>
+            <input type="checkbox" class="form-check-input" id="order_both" name="order_both">
+            <label for="order_both" class="form-check-label">おかずとごはんを頼む</label>
         </div>
 
-        <!-- ごはんチェックボックス -->
+        <!-- おかずのみチェックボックス -->
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="side_dish" name="side_dish">
+            <label for="side_dish" class="form-check-label">おかずのみ</label>
+        </div>
+
+        <!-- ごはんのみチェックボックス -->
         <div class="form-check mb-3">
             <input type="checkbox" class="form-check-input" id="rice" name="rice">
-            <label for="rice" class="form-check-label">ごはんを頼む</label>
+            <label for="rice" class="form-check-label">ごはんのみ</label>
         </div>
 
         <!-- ごはんグラム数選択 -->
@@ -72,36 +91,56 @@
 
 <!-- JavaScript for form validation -->
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const riceCheckbox = document.getElementById('rice');
-        const riceGramSelection = document.getElementById('rice-gram-selection');
-        const submitButton = document.getElementById('submit-btn');
-        const sideDishCheckbox = document.getElementById('side_dish');
-        const riceGramSelect = document.getElementById('rice_gram');
-        
-        // ごはんにチェックが入った場合にグラム数選択を表示
-        riceCheckbox.addEventListener('change', function () {
-            riceGramSelection.style.display = riceCheckbox.checked ? 'block' : 'none';
-        });
-
-        // フォーム全体のバリデーション
-        const validateForm = () => {
-            const isRiceChecked = riceCheckbox.checked;
-            const isSideDishChecked = sideDishCheckbox.checked;
-            const isRiceGramSelected = riceGramSelect.value !== "";
-
-            // おかずもごはんも未選択の場合、またはごはんが選択されているのにグラム数が未選択の場合はボタンを無効化
-            if ((isRiceChecked && !isRiceGramSelected) || (!isRiceChecked && !isSideDishChecked)) {
-                submitButton.disabled = true;
-            } else {
-                submitButton.disabled = false;
-            }
-        };
-
-        // チェックボックスやセレクトボックスが変わった時にバリデーション
-        riceCheckbox.addEventListener('change', validateForm);
-        sideDishCheckbox.addEventListener('change', validateForm);
-        riceGramSelect.addEventListener('change', validateForm);
+    const orderBoth = document.getElementById('order_both');
+    const sideDish = document.getElementById('side_dish');
+    const rice = document.getElementById('rice');
+    const riceGramSection = document.getElementById('rice-gram-selection');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    // "おかずとごはんを頼む"がチェックされたときの処理
+    orderBoth.addEventListener('change', function() {
+        if (this.checked) {
+            sideDish.checked = true;
+            rice.checked = true;
+            riceGramSection.style.display = 'block';
+        } else {
+            sideDish.checked = false;
+            rice.checked = false;
+            riceGramSection.style.display = 'none';
+        }
+        toggleSubmitButton();
     });
+
+    // "おかずのみ"がチェックされたときの処理
+    sideDish.addEventListener('change', function() {
+        // "おかずのみ"がチェックされたら "おかずとごはん" のチェックは外す
+        if (this.checked) {
+            orderBoth.checked = false;
+        }
+        toggleSubmitButton();
+    });
+
+    // "ごはんのみ"がチェックされたときの処理
+    rice.addEventListener('change', function() {
+        if (this.checked) {
+            riceGramSection.style.display = 'block';
+        } else {
+            riceGramSection.style.display = 'none';
+        }
+        toggleSubmitButton();
+    });
+
+    // フォーム全体の状態を監視して予約ボタンの状態を切り替える
+    function toggleSubmitButton() {
+        // sideDish または rice がチェックされている場合は予約ボタンを有効にする
+        if (sideDish.checked || rice.checked) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+
+    // ページ読み込み時に予約ボタンの状態を初期化
+    toggleSubmitButton();
 </script>
 {% endblock %}

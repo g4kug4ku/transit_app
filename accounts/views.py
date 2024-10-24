@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm, CommentForm, BentoReservationForm
-from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User
+from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm
+from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload
 from django.urls import resolve, reverse
 from .utils import decode_filename
 from django.http import JsonResponse
@@ -104,7 +104,9 @@ def bento_reservation(request):
     else:
         form = BentoReservationForm(request=request)  # GETリクエスト時もrequestを渡す
     
-    return render(request, 'accounts/bento_reservation.html', {'form': form})
+    menus = MenuUpload.objects.all()
+    
+    return render(request, 'accounts/bento_reservation.html', {'form': form, 'menus': menus})
 
 @login_required
 def reservation_list(request):
@@ -230,3 +232,25 @@ def generate_order_sheet(request):
     }
 
     return render(request, 'accounts/order_sheet.html', context)
+
+@login_required
+def upload_menu(request):
+    if request.method == 'POST':
+        form = MenuUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('upload_menu')
+    else:
+        form = MenuUploadForm()
+
+    # 既存のメニューを取得
+    menus = MenuUpload.objects.all()
+
+    return render(request, 'accounts/menu.html', {'form': form, 'menus': menus})
+
+@login_required
+def delete_menu(request, menu_id):
+    menu = get_object_or_404(MenuUpload, id=menu_id)
+    menu.delete()
+    messages.success(request, '献立が削除されました。')
+    return redirect('upload_menu')
