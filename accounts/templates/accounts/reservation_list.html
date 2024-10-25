@@ -8,10 +8,11 @@
 <div class="reservation-cards">
     {% for reservation in reservations %}
         <hr>
-        <p>予約日：{{ reservation.reservation_date }}</p>
-        <p>おかず: {{ reservation.side_dish|yesno:"あり,なし" }},
-           ごはん: {% if reservation.rice %} {{ reservation.rice_gram }}g {% else %} なし {% endif %}
-        </p>
+        <p>予約日：{{ reservation.reservation_date|date:"Y年m月d日（D）" }}</p>
+        <div class="reservation-content">
+            <p>ごはん：{% if reservation.rice %} {{ reservation.rice_gram }}g {% else %}なし{% endif %}</p>
+            <p>おかず：{% if reservation.side_dish %} あり {% else %}なし{% endif %}</p>
+        </div>
 
         {% if reservation.can_cancel %}
             <a href="{% url 'cancel_reservation' reservation.id %}" class="btn btn-danger">取消</a>
