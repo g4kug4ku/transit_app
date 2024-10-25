@@ -3,17 +3,16 @@
 {% block content %}
 <div class="container mt-5">
     <!-- 献立リンク -->
-    {% if menus %}
-    <div class="mt-4">
-        <h4>献立</h4>
-        <ul>
-            {% for menu in menus %}
-                <li>
-                    <a href="{{ menu.file.url }}" target="_blank">{{ menu.title }}</a>
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
+    {% if latest_menu %}
+        <div class="menu-display">
+            {% if is_pdf %}
+                <!-- PDFビューワーで表示 -->
+                <embed src="{{ latest_menu.file.url }}" width="100%" height="500px" type="application/pdf">
+            {% else %}
+                <!-- 画像として表示 -->
+                <img src="{{ latest_menu.file.url }}" alt="{{ latest_menu.title }}" class="img-fluid">
+            {% endif %}
+        </div>
     {% endif %}
     <h1 class="text-center">-弁当予約-</h1>
 
@@ -48,7 +47,7 @@
         <!-- おかずとごはんを頼むチェックボックス -->
         <div class="form-check mb-3" style="display: flex; align-items: center;">
             <input type="checkbox" class="form-check-input" id="order_both" name="order_both">
-            <label for="order_both" class="form-check-label" style="font-size: 30px;">おかずとごはんを頼む</label>
+            <label for="order_both" class="form-check-label" style="font-size: 20px;">おかずとごはんを頼む</label>
         </div>
 
         <!-- おかずのみチェックボックス -->

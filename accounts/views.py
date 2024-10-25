@@ -104,9 +104,15 @@ def bento_reservation(request):
     else:
         form = BentoReservationForm(request=request)  # GETリクエスト時もrequestを渡す
     
-    menus = MenuUpload.objects.all()
     
-    return render(request, 'accounts/bento_reservation.html', {'form': form, 'menus': menus})
+    latest_menu = MenuUpload.objects.last()
+    
+    # 献立が存在し、PDFかどうかをチェック
+    is_pdf = False
+    if latest_menu and latest_menu.file.url.endswith(".pdf"):
+        is_pdf = True
+    
+    return render(request, 'accounts/bento_reservation.html', {'form': form, 'latest_menu': latest_menu, 'is_pdf': is_pdf})
 
 @login_required
 def reservation_list(request):

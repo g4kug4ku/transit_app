@@ -78,6 +78,10 @@
             max-width: 70%;
             clear: both;
         }
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+        } 
     </style>
 </head>
 <body>
@@ -102,6 +106,7 @@
             <ul class="list-unstyled">
                 <li><a href="{% url 'index' %}" class="text-dark">投稿一覧</a></li>
                 <li><a href="{% url 'bento_reservation' %}" class="text-dark">弁当予約</a></li>
+                <li><a href="https://repo.transit-iko.net/" class="text-dark">業務日誌</a></li>
                 {% if user.is_staff %}  <!-- 管理者の場合のみ表示 -->
                 <li><a href="{% url 'admin_bento_reservation_list' %}" class="nav-link">弁当予約者一覧</a></li>
                 <li><a href="{% url 'upload_menu' %}">献立をアップロード</a></li>
