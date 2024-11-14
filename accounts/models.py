@@ -28,6 +28,10 @@ class Post(models.Model):
     
     def total_likes(self):
         return self.likes.count()
+    
+    class Meta:
+        verbose_name = "投稿"
+        verbose_name_plural = "投稿一覧"
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
@@ -48,7 +52,8 @@ class BentoReservation(models.Model):
     rice_gram = models.IntegerField(null=True, blank=True)
     received = models.BooleanField(default=False)
     memo = models.TextField(blank=True, null=True)
-    transfer_user = models.CharField(max_length=255, blank=True, null=True)
+    transfer_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='transferred_reservations')
+    original_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='original_reservations')
 
     def __str__(self):
         return f"{self.user} - {self.reservation_date}"
@@ -59,8 +64,33 @@ class BentoReservation(models.Model):
         cancel_deadline_time = timezone.make_aware(datetime.combine(cancel_deadline, time(15, 0, 0)))
         return timezone.now() < cancel_deadline_time
     
+    @property
+    def transfer_user_name(self):
+        if self.transfer_user:
+            return f"{self.transfer_user.last_name} {self.transfer_user.first_name}"
+        return "No Transfer User"
+    
+    @property
+    def original_user_name(self):
+        if self.original_user:
+            return f"{self.original_user.last_name} {self.original_user.first_name}"
+        return "No Original User"
+    
     def __str__(self):
         return f'{self.user.username} - {self.reservation_date}'
+    
+    class Meta:
+        verbose_name = "弁当予約"
+        verbose_name_plural = "弁当予約一覧"
+
+class UserChangeLog(models.Model):
+    reservation = models.ForeignKey(BentoReservation, on_delete=models.CASCADE, related_name='change_logs')
+    old_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='old_user_logs')
+    new_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='new_user_logs')
+    changed_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.changed_at} - {self.old_user} to {self.new_user}"
 
 class BentoUnavailableDay(models.Model):
     date = models.DateField()
@@ -68,6 +98,10 @@ class BentoUnavailableDay(models.Model):
 
     def __str__(self):
         return str(self.date)
+    
+    class Meta:
+        verbose_name = "予約不可日"
+        verbose_name_plural = "予約不可日一覧"
 
 class MenuUpload(models.Model):
     title = models.CharField(max_length=255)

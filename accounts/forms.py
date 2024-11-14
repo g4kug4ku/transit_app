@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload
@@ -8,6 +9,8 @@ import datetime
 from django.core.exceptions import ValidationError
 from datetime import date
 
+User = get_user_model()
+
 class SignUpForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True)
     last_name = forms.CharField(max_length=30, required=True)
@@ -15,6 +18,10 @@ class SignUpForm(UserCreationForm):
     class Meta:
         model =User
         fields = ('username', 'first_name', 'last_name', 'password1', 'password2')
+
+class CustomUserChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return f"{obj.last_name} {obj.first_name}"
 
 class CommentForm(forms.ModelForm):
     class Meta:
