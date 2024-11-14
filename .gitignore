@@ -4,4 +4,6 @@ db.sqlite3
 .env
 .vscode
 *.log
+media/
+staticfiles/
 local_settings.py
