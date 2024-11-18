@@ -63,6 +63,7 @@ class BentoReservationForm(forms.ModelForm):
     def clean_reservation_date(self):
         reservation_date = self.cleaned_data.get('reservation_date')
         unavailable_days = BentoUnavailableDay.objects.values_list('date', flat=True)
+        current_datetime = timezone.now()
         
         # ここでrequest.userを参照
         user = self.request.user if self.request else None
@@ -81,7 +82,7 @@ class BentoReservationForm(forms.ModelForm):
         if reservation_date in unavailable_days:
             raise ValidationError("選択した日は予約不可です。別の日を選択してください。")
         
-        # 前日の15時を過ぎたら予約できないロジック
+        # 前日の16時を過ぎたら予約できないロジック
         today = timezone.localdate()
         if reservation_date == today + datetime.timedelta(days=1):
             cancel_deadline = datetime.datetime.combine(today, datetime.time(16, 0, 0))
@@ -91,6 +92,24 @@ class BentoReservationForm(forms.ModelForm):
         # 予約日が過去の日付でないかのチェック (任意で追加)
         if reservation_date < date.today():
             raise ValidationError("過去の日付は予約できません。")
+        
+        if reservation_date == date.today():
+            raise ValidationError('当日は予約できません。')
+        
+        # 翌週の最初の平日を計算
+        next_weekday = reservation_date
+        while next_weekday.weekday() in [5, 6] or BentoUnavailableDay.objects.filter(date=next_weekday).exists():
+            next_weekday += timedelta(days=1)
+        
+        # 前の週の最後の平日を計算
+        previous_weekday = next_weekday - timedelta(days=1)
+        while previous_weekday.weekday() in [5, 6] or BentoUnavailableDay.objects.filter(date=previous_weekday).exists():
+            previous_weekday -= timedelta(days=1)
+
+        reservation_deadline = timezone.make_aware(datetime.combine(previous_weekday, time(16, 0)))
+
+        if reservation_date == next_weekday and current_datetime > reservation_deadline:
+            raise ValidationError(f"{next_weekday.strftime('%Y-%m-%d')} の予約は {previous_weekday.strftime('%Y-%m-%d')} の16時までです。")
         
         # 未来の日付に既に予約があるか確認（当日の予約は許可）
         if reservation_date > today:
