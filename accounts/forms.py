@@ -7,7 +7,7 @@ from django.utils import timezone
 import jpholiday
 import datetime
 from django.core.exceptions import ValidationError
-from datetime import date
+from datetime import datetime, timedelta, date, time
 
 User = get_user_model()
 
@@ -84,7 +84,7 @@ class BentoReservationForm(forms.ModelForm):
         
         # 前日の16時を過ぎたら予約できないロジック
         today = timezone.localdate()
-        if reservation_date == today + datetime.timedelta(days=1):
+        if reservation_date == today + timedelta(days=1):
             cancel_deadline = datetime.datetime.combine(today, datetime.time(16, 0, 0))
             if timezone.now() > timezone.make_aware(cancel_deadline):
                 raise ValidationError("翌日分の予約は前日の16時までです。")
