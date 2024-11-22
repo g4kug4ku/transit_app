@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.utils.text import slugify
-from datetime import timedelta, datetime, time
+from datetime import timedelta, datetime, time, date
+from django.conf import settings
 
 User = get_user_model()
 
@@ -110,3 +111,36 @@ class MenuUpload(models.Model):
 
     def __str__(self):
         return self.title
+    
+#家計簿
+class KakeiboEntry(models.Model):
+    TRANSACTION_TYPE_CHOICES = [
+        ('income', '収入'),
+        ('expense', '支出'),
+    ]
+
+    STATUS_CHOICES = [
+        ('confirmed', '確定済み'),
+        ('pending', '未確定'),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    transaction_type = models.CharField(
+        max_length=10,
+        choices=TRANSACTION_TYPE_CHOICES,
+        default='expense'
+    )
+    category = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    memo = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='kakeibo_images/', blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)  # 作成日時
+    updated_at = models.DateTimeField(auto_now=True)      # 更新日時
+
+    def __str__(self):
+        return f"{self.user.username} - {self.category} ({self.transaction_type})"

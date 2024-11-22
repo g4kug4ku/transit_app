@@ -14,4 +14,8 @@ urlpatterns = [
     path('generate_order_sheet/', views.generate_order_sheet, name='generate_order_sheet'),
     path('upload_menu/', views.upload_menu, name='upload_menu'),
     path('delete_menu/<int:menu_id>/', views.delete_menu, name='delete_menu'),
+    path('kakeibo/', views.kakeibo_list, name='kakeibo_list'),
+    path('kakeibo/<int:pk>/', views.kakeibo_detail, name='kakeibo_detail'),
+    path('kakeibo/create/', views.kakeibo_create, name='kakeibo_create'),
+    path('kakeibo/delete/<int:pk>/', views.kakeibo_delete, name='kakeibo_delete'),
 ]

@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload
+from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload, KakeiboEntry
 from django.utils import timezone
 import jpholiday
 import datetime
@@ -128,3 +128,9 @@ class MenuUploadForm(forms.ModelForm):
         if not file:
             raise forms.ValidationError("ファイルを選択してください。")
         return file
+
+#家計簿
+class KakeiboForm(forms.ModelForm):
+    class Meta:
+        model = KakeiboEntry
+        fields = ['transaction_type', 'category', 'amount', 'status', 'memo', 'image', 'created_at']

@@ -107,8 +107,10 @@
                 <li><a href="{% url 'index' %}" class="text-dark">投稿一覧</a></li>
                 <li><a href="{% url 'bento_reservation' %}" class="text-dark">弁当予約</a></li>
                 <li><a href="https://repo.transit-iko.net/" class="text-dark">業務日誌</a></li>
+                <li><a href="{% url 'kakeibo_list' %}" class="text-dark">家計簿</a></li>
                 {% if user.is_staff %}  <!-- 管理者の場合のみ表示 -->
-                <li><a href="{% url 'admin_bento_reservation_list' %}" class="nav-link">弁当予約者一覧</a></li>
+                <li><a href="{% url 'admin_bento_reservation_list' %}" class="text-dark">弁当予約者一覧</a></li>
+                <li><a href="https://gakugaku.pythonanywhere.com/admin/accounts/bentoreservation/" class="text-dark">管理サイト</a></li>
                 <li><a href="{% url 'upload_menu' %}">献立をアップロード</a></li>
                 {% endif %}
             </ul>

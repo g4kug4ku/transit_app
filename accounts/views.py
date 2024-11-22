@@ -2,16 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm
-from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload
+from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm
+from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry
 from django.urls import resolve, reverse
 from .utils import decode_filename
-from django.http import JsonResponse
 from django.contrib import messages
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.db.models import Q, Sum
 
 # Create your views here.
 def signup(request):
@@ -260,3 +260,39 @@ def delete_menu(request, menu_id):
     menu.delete()
     messages.success(request, '献立が削除されました。')
     return redirect('upload_menu')
+
+#家計簿
+@login_required
+def kakeibo_list(request):
+    entries = KakeiboEntry.objects.filter(user=request.user)
+
+    return render(request, 'accounts/kakeibo_list.html', {
+        'kakeibo_entries': entries,
+    })
+    
+@login_required
+def kakeibo_detail(request, pk):
+    entry = get_object_or_404(KakeiboEntry, pk=pk, user=request.user)
+    return render(request, 'accounts/kakeibo_detail.html', {'entry': entry})
+
+@login_required
+def kakeibo_create(request):
+    if request.method == 'POST':
+        form = KakeiboForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.instance.user = request.user  # ユーザー情報をセット
+            form.save()  # 家計簿データを保存
+            messages.success(request, "収支が追加されました！")
+            return redirect('kakeibo_list')
+    else:
+        form = KakeiboForm()
+
+    return render(request, 'accounts/kakeibo_form.html', {'form': form})
+
+@login_required
+def kakeibo_delete(request, pk):
+    entry = get_object_or_404(KakeiboEntry, pk=pk, user=request.user)
+    entry.delete()
+    messages.success(request, "収支データを削除しました！")
+    return redirect('kakeibo_list')
+

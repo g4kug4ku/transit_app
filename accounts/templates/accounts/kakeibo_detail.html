@@ -1,0 +1,12 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<h1>{{ entry.get_category_display }}</h1>
+<p>金額: {{ entry.amount }}</p>
+<p>日付: {{ entry.scheduled_date }}</p>
+<p>説明: {{ entry.description }}</p>
+<p>タグ: {% for tag in entry.tags.all %} {{ tag.name }} {% endfor %}</p>
+{% if entry.image %}
+    <img src="{{ entry.image.url }}" alt="添付画像" class="img-fluid">
+{% endif %}
+<a href="{% url 'kakeibo_list' %}" class="btn btn-secondary">戻る</a>
+{% endblock %}
