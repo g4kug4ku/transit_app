@@ -12,6 +12,10 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.db.models import Q, Sum
+from collections import defaultdict
+from django.utils.timezone import localdate
+from itertools import groupby
+from operator import attrgetter
 
 # Create your views here.
 def signup(request):
@@ -262,28 +266,72 @@ def delete_menu(request, menu_id):
     return redirect('upload_menu')
 
 #家計簿
+import logging
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def kakeibo_list(request):
-    entries = KakeiboEntry.objects.filter(user=request.user)
+    current_year = request.GET.get("year", localdate().year)
+    current_month = request.GET.get("month", localdate().month)
+
+    entries = KakeiboEntry.objects.filter(
+        user=request.user,
+        created_at__year=current_year,
+        created_at__month=current_month,
+    ).order_by('-created_at')
+
+    # デバッグ用ログ
+    logger.info(f"Selected Year: {current_year}, Selected Month: {current_month}")
+    logger.info(f"Entries: {entries}")
+
+    grouped_entries = defaultdict(list)
+    for entry in entries:
+        grouped_entries[entry.created_at.date()].append(entry)
+
+    total_income = entries.filter(transaction_type="income").aggregate(Sum("amount"))["amount__sum"] or 0
+    total_expense = entries.filter(transaction_type="expense").aggregate(Sum("amount"))["amount__sum"] or 0
 
     return render(request, 'accounts/kakeibo_list.html', {
-        'kakeibo_entries': entries,
+        "grouped_entries": dict(grouped_entries),
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "current_year": int(current_year),
+        "current_month": int(current_month),
+        "month_range": range(1, 13),
+        "year_range": range(localdate().year - 5, localdate().year + 1),  # 5年前から今年まで
     })
-    
+
 @login_required
 def kakeibo_detail(request, pk):
     entry = get_object_or_404(KakeiboEntry, pk=pk, user=request.user)
-    return render(request, 'accounts/kakeibo_detail.html', {'entry': entry})
+    
+    if request.method == 'POST':
+        form = KakeiboForm(request.POST, request.FILES, instance=entry)
+        if form.is_valid():
+            if 'delete_image' in request.POST and request.POST['delete_image'] == 'on':
+                entry.image.delete(save=False)  # 画像を削除
+                entry.image = None
+            form.save()
+            messages.success(request, "収支情報が更新されました！")
+            return redirect('kakeibo_list')
+    else:
+        form = KakeiboForm(instance=entry)
+    
+    return render(request, 'accounts/kakeibo_detail.html', {'form': form, 'entry': entry})
 
 @login_required
 def kakeibo_create(request):
     if request.method == 'POST':
         form = KakeiboForm(request.POST, request.FILES)
         if form.is_valid():
-            form.instance.user = request.user  # ユーザー情報をセット
-            form.save()  # 家計簿データを保存
+            # ログインユーザーを設定
+            form.instance.user = request.user
+            form.save()
             messages.success(request, "収支が追加されました！")
-            return redirect('kakeibo_list')
+            return redirect('kakeibo_list')  # 保存後に一覧ページにリダイレクト
+        else:
+            messages.error(request, "入力内容に誤りがあります。")
     else:
         form = KakeiboForm()
 
@@ -295,4 +343,3 @@ def kakeibo_delete(request, pk):
     entry.delete()
     messages.success(request, "収支データを削除しました！")
     return redirect('kakeibo_list')
-

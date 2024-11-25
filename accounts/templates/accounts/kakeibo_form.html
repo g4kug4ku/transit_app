@@ -6,6 +6,11 @@
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         
+        <div class="form-group">
+            <label for="id_created_at">日付:</label>
+            <input type="date" id="id_created_at" name="created_at" class="form-control" required>
+        </div>
+
         <!-- 収入か支出かを選択 -->
         <div class="mb-3">
             <label for="transaction_type" class="form-label">収入/支出<span class="text-danger">*</span></label>

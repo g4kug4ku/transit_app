@@ -1,12 +1,38 @@
 {% extends "accounts/base.html" %}
+{% load django_bootstrap5 %}
+
 {% block content %}
-<h1>{{ entry.get_category_display }}</h1>
-<p>金額: {{ entry.amount }}</p>
-<p>日付: {{ entry.scheduled_date }}</p>
-<p>説明: {{ entry.description }}</p>
-<p>タグ: {% for tag in entry.tags.all %} {{ tag.name }} {% endfor %}</p>
-{% if entry.image %}
-    <img src="{{ entry.image.url }}" alt="添付画像" class="img-fluid">
-{% endif %}
-<a href="{% url 'kakeibo_list' %}" class="btn btn-secondary">戻る</a>
+<h1>収支詳細編集</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+        {{ form.created_at.label_tag }} {{ form.created_at }}
+    </div>
+    <div class="mb-3">
+        {{ form.category.label_tag }} {{ form.category }}
+    </div>
+    <div class="mb-3">
+        {{ form.amount.label_tag }} {{ form.amount }}
+    </div>
+    <div class="mb-3">
+        {{ form.status.label_tag }} {{ form.status }}
+    </div>
+    <div class="mb-3">
+        {{ form.memo.label_tag }} {{ form.memo }}
+    </div>
+    <div class="mb-3">
+        {{ form.image.label_tag }} {{ form.image }}
+        {% if entry.image %}
+            <div>
+                <img src="{{ entry.image.url }}" alt="現在の画像" class="img-thumbnail" style="max-width: 200px;">
+                <input type="checkbox" name="delete_image" id="delete_image">
+                <label for="delete_image">画像を削除する</label>
+            </div>
+        {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">保存</button>
+    <a href="{% url 'kakeibo_list' %}" class="btn btn-secondary">戻る</a>
+</form>
 {% endblock %}

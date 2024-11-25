@@ -1,42 +1,69 @@
 {% extends "accounts/base.html" %}
+{% load humanize %}  <!-- humanize モジュールをロード -->
 {% block content %}
 <h1>家計簿</h1>
 
-<div class="mb-3 text-end">
-    <a href="{% url 'kakeibo_create' %}" class="btn btn-primary">収支を追加</a>
+<!-- 年と月の選択 -->
+<form method="get" action="{% url 'kakeibo_list' %}">
+    <select name="year" class="form-select mb-3" onchange="this.form.submit()">
+        {% for year_num in year_range %}
+            <option value="{{ year_num }}" {% if year_num == current_year %}selected{% endif %}>
+                {{ year_num }}年
+            </option>
+        {% endfor %}
+    </select>
+
+    <select name="month" class="form-select mb-3" onchange="this.form.submit()">
+        {% for month_num in month_range %}
+            <option value="{{ month_num }}" {% if month_num == current_month %}selected{% endif %}>
+                {{ month_num }}月
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- 新規追加ボタン -->
+<a href="{% url 'kakeibo_create' %}" class="btn btn-primary mb-3">新規追加</a>
+
+
+<!-- 合計収支表示 -->
+<div class="mb-3">
+    <p>収入合計: <strong>￥{{ total_income|intcomma }}</strong></p>
+    <p>支出合計: <strong class="text-danger">-￥{{ total_expense|intcomma }}</strong></p>
 </div>
 
-<!-- 家計簿のリスト部分 -->
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>削除</th>
-            <th>日付</th>
-            <th>収支</th>
-            <th>金額</th>
-            <th>カテゴリ</th>
-            <th>詳細</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in kakeibo_entries %}
-        <tr>
-            <td>
-                <form method="POST" action="{% url 'kakeibo_delete' entry.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('この収支データを削除してもよろしいですか？');">削除</button>
-                </form>
-            </td>
-            <td>{{ entry.created_at }}</td>
-            <td>{{ entry.get_category_display }}</td>
-            <td>{{ entry.amount }}</td>
-            <td>{{ entry.category }}</td>
-            <td>
-                <a href="{% url 'kakeibo_detail' entry.id %}" class="btn btn-info btn-sm">詳細</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+<!-- 家計簿一覧 -->
+{% for date, entries in grouped_entries.items %}
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">{{ date }}</h5>
+            {% for entry in entries %}
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <div>
+                        <strong>{{ entry.category }}</strong>:
+                        {% if entry.transaction_type == "income" %}
+                            ￥{{ entry.amount|floatformat:0 }}
+                        {% else %}
+                            <span class="text-danger">-￥{{ entry.amount|floatformat:0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if entry.status == 'confirmed' %}
+                            確定済み
+                        {% else %}
+                            未確定
+                        {% endif %} | 
+                        <a href="{% url 'kakeibo_detail' entry.id %}" class="btn btn-sm btn-info">詳細</a>
+                        <form method="post" action="{% url 'kakeibo_delete' entry.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">削除</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% empty %}
+    <p>データがありません。</p>
+{% endfor %}
 {% endblock %}

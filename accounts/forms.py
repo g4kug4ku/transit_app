@@ -133,4 +133,8 @@ class MenuUploadForm(forms.ModelForm):
 class KakeiboForm(forms.ModelForm):
     class Meta:
         model = KakeiboEntry
-        fields = ['transaction_type', 'category', 'amount', 'status', 'memo', 'image', 'created_at']
+        fields = ['created_at', 'category', 'amount', 'status', 'memo', 'image']  # 編集可能なフィールドを指定
+        widgets = {
+            'created_at': forms.DateInput(attrs={'type': 'date'}),
+            'amount': forms.NumberInput(attrs={'step': '0.01'}),
+        }
