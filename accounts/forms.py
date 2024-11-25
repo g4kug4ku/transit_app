@@ -133,8 +133,44 @@ class MenuUploadForm(forms.ModelForm):
 class KakeiboForm(forms.ModelForm):
     class Meta:
         model = KakeiboEntry
-        fields = ['created_at', 'category', 'amount', 'status', 'memo', 'image']  # 編集可能なフィールドを指定
+        fields = ['created_at', 'transaction_type', 'category', 'amount', 'status', 'memo', 'image']
         widgets = {
-            'created_at': forms.DateInput(attrs={'type': 'date'}),
-            'amount': forms.NumberInput(attrs={'step': '0.01'}),
+            'created_at': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'transaction_type': forms.Select(attrs={'class': 'form-select'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'memo': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+    INCOME_CATEGORIES = [
+        ('給与', '給与'), ('副収入', '副収入'), ('投資収益', '投資収益'), 
+        ('臨時収入', '臨時収入'), ('不労所得', '不労所得'), 
+        ('返金・補助金', '返金・補助金'), ('その他（収入）', 'その他（収入）')
+    ]
+
+    EXPENSE_CATEGORIES = [
+        ('住居費', '住居費'), ('食費', '食費'), ('光熱費', '光熱費'), 
+        ('通信費', '通信費'), ('交通費', '交通費'), ('保険料', '保険料'),
+        ('教育費', '教育費'), ('医療費', '医療費'), ('娯楽費', '娯楽費'), 
+        ('衣服・美容', '衣服・美容'), ('交際費', '交際費'), 
+        ('税金・手数料', '税金・手数料'), ('その他（支出）', 'その他（支出）')
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super(KakeiboForm, self).__init__(*args, **kwargs)
+        self.fields['category'].choices = [('', 'カテゴリを選択')]  # 初期値を設定
+
+        if 'transaction_type' in self.data:
+            transaction_type = self.data.get('transaction_type')
+            if transaction_type == 'income':
+                self.fields['category'].choices += self.INCOME_CATEGORIES
+            elif transaction_type == 'expense':
+                self.fields['category'].choices += self.EXPENSE_CATEGORIES
+        elif self.instance and self.instance.transaction_type:
+            # 編集時のカテゴリ設定
+            if self.instance.transaction_type == 'income':
+                self.fields['category'].choices += self.INCOME_CATEGORIES
+            elif self.instance.transaction_type == 'expense':
+                self.fields['category'].choices += self.EXPENSE_CATEGORIES

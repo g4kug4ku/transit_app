@@ -287,10 +287,10 @@ def kakeibo_list(request):
 
     grouped_entries = defaultdict(list)
     for entry in entries:
-        grouped_entries[entry.created_at.date()].append(entry)
+        grouped_entries[entry.created_at].append(entry)
 
-    total_income = entries.filter(transaction_type="income").aggregate(Sum("amount"))["amount__sum"] or 0
-    total_expense = entries.filter(transaction_type="expense").aggregate(Sum("amount"))["amount__sum"] or 0
+    total_income = entries.filter(transaction_type='income').aggregate(total=Sum('amount'))['total'] or 0
+    total_expense = entries.filter(transaction_type='expense').aggregate(total=Sum('amount'))['total'] or 0
 
     return render(request, 'accounts/kakeibo_list.html', {
         "grouped_entries": dict(grouped_entries),
@@ -305,33 +305,43 @@ def kakeibo_list(request):
 @login_required
 def kakeibo_detail(request, pk):
     entry = get_object_or_404(KakeiboEntry, pk=pk, user=request.user)
-    
+    income_categories = ['給与', '副収入', '投資収益', '臨時収入', '不労所得', '返金・補助金', 'その他（収入）']
+    expense_categories = ['住居費', '食費', '光熱費', '通信費', '交通費', '保険料', '教育費', '医療費', '娯楽費', '衣服・美容', '交際費', '税金・手数料', 'その他（支出）']
+
     if request.method == 'POST':
         form = KakeiboForm(request.POST, request.FILES, instance=entry)
         if form.is_valid():
+            # 画像削除のチェックが入っている場合
             if 'delete_image' in request.POST and request.POST['delete_image'] == 'on':
-                entry.image.delete(save=False)  # 画像を削除
-                entry.image = None
+                if entry.image:
+                    entry.image.delete()  # 画像ファイルを削除
+                    entry.image = None  # フィールドを空にする
+
             form.save()
-            messages.success(request, "収支情報が更新されました！")
+            messages.success(request, "家計簿が更新されました！")
             return redirect('kakeibo_list')
     else:
         form = KakeiboForm(instance=entry)
     
-    return render(request, 'accounts/kakeibo_detail.html', {'form': form, 'entry': entry})
+    return render(request, 'accounts/kakeibo_detail.html', {
+        'entry': entry,
+        'income_categories': income_categories,
+        'expense_categories': expense_categories,
+    })
 
 @login_required
 def kakeibo_create(request):
     if request.method == 'POST':
         form = KakeiboForm(request.POST, request.FILES)
         if form.is_valid():
-            # ログインユーザーを設定
-            form.instance.user = request.user
-            form.save()
+            form.instance.user = request.user  # ユーザー情報を設定
+            form.instance.created_at = form.cleaned_data['created_at'] 
+            form.save()  # データベースに保存
             messages.success(request, "収支が追加されました！")
-            return redirect('kakeibo_list')  # 保存後に一覧ページにリダイレクト
+            return redirect('kakeibo_list')  # 保存後にリストページへリダイレクト
         else:
-            messages.error(request, "入力内容に誤りがあります。")
+            # フォームが無効な場合、エラーを表示
+            messages.error(request, "入力にエラーがあります。確認してください。")
     else:
         form = KakeiboForm()
 

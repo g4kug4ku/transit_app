@@ -139,7 +139,7 @@ class KakeiboEntry(models.Model):
     )
     memo = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='kakeibo_images/', blank=True, null=True)
-    created_at = models.DateTimeField(default=timezone.now)  # 作成日時
+    created_at = models.DateField()  # 作成日時
     updated_at = models.DateTimeField(auto_now=True)      # 更新日時
 
     def __str__(self):
