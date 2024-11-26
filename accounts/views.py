@@ -2,20 +2,22 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm
-from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry
+from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm, SongRequestForm
+from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry, SongRequest
 from django.urls import resolve, reverse
 from .utils import decode_filename
 from django.contrib import messages
 from datetime import datetime, timedelta
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from collections import defaultdict
 from django.utils.timezone import localdate
 from itertools import groupby
 from operator import attrgetter
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 # Create your views here.
 def signup(request):
@@ -353,3 +355,57 @@ def kakeibo_delete(request, pk):
     entry.delete()
     messages.success(request, "収支データを削除しました！")
     return redirect('kakeibo_list')
+
+#曲リクエスト
+@login_required
+def song_request_list(request):
+    sort = request.GET.get('sort', 'date')  # デフォルトは日付順
+    if sort == 'likes':
+        requests = SongRequest.objects.annotate(like_count=Count('likes')).order_by('-like_count')
+    else:
+        requests = SongRequest.objects.order_by('-request_date')
+    return render(request, 'accounts/song_request_list.html', {'requests': requests, 'sort': sort})
+
+@login_required
+@csrf_exempt  # AJAXリクエスト用
+def song_request_create(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)  # JSONデータを取得
+        artist = data.get('artist')
+        song_name = data.get('song_name')
+
+        if artist and song_name:
+            song_request = SongRequest.objects.create(
+                user=request.user,
+                artist=artist,
+                song_name=song_name
+            )
+            return JsonResponse({
+                'id': song_request.id,
+                'artist': song_request.artist,
+                'song_name': song_request.song_name,
+                'request_date': song_request.request_date.strftime('%Y-%m-%d'),
+                'user': f"{song_request.user.last_name} {song_request.user.first_name}",
+                'like_count': 0
+            })
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+@login_required
+def toggle_like(request, request_id):
+    if request.method == 'POST':
+        song_request = get_object_or_404(SongRequest, id=request_id)
+        if request.user in song_request.likes.all():
+            song_request.likes.remove(request.user)
+            liked = False
+        else:
+            song_request.likes.add(request.user)
+            liked = True
+        song_request.save()
+        return JsonResponse({'liked': liked, 'like_count': song_request.likes.count()})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def delete_song_request(request, request_id):
+    song_request = get_object_or_404(SongRequest, id=request_id, user=request.user)
+    song_request.delete()
+    return JsonResponse({'success': True})

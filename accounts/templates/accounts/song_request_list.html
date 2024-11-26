@@ -1,0 +1,138 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% block content %}
+
+<head>
+    <meta name="csrf-token" content="{{ csrf_token }}">  <!-- CSRFトークンをここに追加 -->
+</head>
+
+<div class="container mt-4">
+    <h1 class="mb-3">曲をリクエスト</h1>
+
+    <!-- リクエストフォーム -->
+    <div class="row g-2 mb-4">
+        <div class="col-md-4">
+            <input type="text" id="artist" class="form-control" placeholder="アーティスト名">
+        </div>
+        <div class="col-md-4">
+            <input type="text" id="song_name" class="form-control" placeholder="曲名">
+        </div>
+        <div class="col-md-4">
+            <button id="request-button" class="btn btn-primary w-100">リクエスト</button>
+        </div>
+    </div>
+
+    <!-- リクエスト一覧 -->
+    <h3>リクエスト一覧</h3>
+    <div class="d-flex justify-content-end mb-3">
+        <a href="?sort=date" class="btn btn-outline-secondary me-2">リクエスト日順</a>
+        <a href="?sort=likes" class="btn btn-outline-secondary">ハートの多い順</a>
+    </div>
+    <div id="request-list">
+        {% for request in requests %}
+            <div class="card mb-3" id="request-{{ request.id }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ request.song_name }} - {{ request.artist }}</h5>
+                    <p class="card-text">リクエスト日: {{ request.request_date|date:"Y年m月d日" }}</p>
+                    <p class="card-text">リクエスト者: {{ request.user.last_name }} {{ request.user.first_name }}</p>
+                    <button class="btn btn-outline-danger like-button" data-id="{{ request.id }}">
+                        <i class="bi {% if user in request.likes.all %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                        <span class="like-count">{{ request.like_count }}</span>
+                    </button>
+                    {% if request.user == user %}
+                        <button class="btn btn-danger delete-button" data-id="{{ request.id }}">削除</button>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.getElementById('request-button').addEventListener('click', function() {
+        const artist = document.getElementById('artist').value.trim();
+        const songName = document.getElementById('song_name').value.trim();
+
+        if (artist && songName) {
+            fetch("{% url 'song_request_create' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ artist: artist, song_name: songName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    // リクエスト一覧に新しいリクエストを追加
+                    const requestList = document.getElementById('request-list');
+                    const newRequest = document.createElement('div');
+                    newRequest.className = 'card mb-3';
+                    newRequest.id = `request-${data.id}`;
+                    newRequest.innerHTML = `
+                        <div class="card-body">
+                            <h5 class="card-title">${data.song_name} - ${data.artist}</h5>
+                            <p class="card-text">リクエスト日: ${data.request_date}</p>
+                            <p class="card-text">リクエスト者: ${data.user}</p>
+                            <button class="btn btn-outline-danger like-button" data-id="${data.id}">
+                                <i class="bi bi-heart"></i>
+                                <span class="like-count">0</span>
+                            </button>
+                        </div>
+                    `;
+                    requestList.prepend(newRequest);
+                    // フォームをリセット
+                    document.getElementById('artist').value = '';
+                    document.getElementById('song_name').value = '';
+                }
+            });
+        } else {
+            alert('アーティスト名と曲名を入力してください。');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.like-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const requestId = this.dataset.id;
+                fetch(`/song_request/${requestId}/like/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        const likeIcon = this.querySelector('i');
+                        likeIcon.classList.toggle('bi-heart');
+                        likeIcon.classList.toggle('bi-heart-fill');
+                        this.querySelector('.like-count').textContent = data.like_count;
+                    }
+                });
+            });
+        });
+    });
+
+    document.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const requestId = this.dataset.id;
+            if (confirm('本当に削除しますか？')) {
+                fetch(`/song_request/${requestId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById(`request-${requestId}`).remove();
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

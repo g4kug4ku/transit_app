@@ -144,3 +144,17 @@ class KakeiboEntry(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.category} ({self.transaction_type})"
+
+#曲リクエスト
+class SongRequest(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    artist = models.CharField(max_length=100)
+    song_name = models.CharField(max_length=100)
+    request_date = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_requests', blank=True)
+
+    def like_count(self):
+        return self.likes.count()
+
+    def __str__(self):
+        return f"{self.song_name} - {self.artist}"

@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload, KakeiboEntry
+from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload, KakeiboEntry, SongRequest
 from django.utils import timezone
 import jpholiday
 import datetime
@@ -174,3 +174,13 @@ class KakeiboForm(forms.ModelForm):
                 self.fields['category'].choices += self.INCOME_CATEGORIES
             elif self.instance.transaction_type == 'expense':
                 self.fields['category'].choices += self.EXPENSE_CATEGORIES
+
+#曲リクエスト
+class SongRequestForm(forms.ModelForm):
+    class Meta:
+        model = SongRequest
+        fields = ['artist', 'song_name']
+        widgets = {
+            'artist': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'アーティスト名'}),
+            'song_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '曲名'}),
+        }

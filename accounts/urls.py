@@ -18,4 +18,8 @@ urlpatterns = [
     path('kakeibo/<int:pk>/', views.kakeibo_detail, name='kakeibo_detail'),
     path('kakeibo/create/', views.kakeibo_create, name='kakeibo_create'),
     path('kakeibo/delete/<int:pk>/', views.kakeibo_delete, name='kakeibo_delete'),
+    path('song_requests/', views.song_request_list, name='song_request_list'),
+    path('song_requests/create/', views.song_request_create, name='song_request_create'),
+    path('song_request/<int:request_id>/like/', views.toggle_like, name='toggle_like'),
+    path('song_request/<int:request_id>/delete/', views.delete_song_request, name='delete_song_request'),
 ]
