@@ -18,6 +18,9 @@ from itertools import groupby
 from operator import attrgetter
 from django.views.decorators.csrf import csrf_exempt
 import json
+import openpyxl
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
 
 # Create your views here.
 def signup(request):
@@ -206,10 +209,88 @@ def admin_bento_reservation_list(request):
         'rice_200g_counts': rice_200g_counts,
     })
 
+def export_bento_reservations(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    reservations_by_date = BentoReservation.objects.filter(
+        reservation_date__range=[start_date, end_date]
+    ).order_by('reservation_date')
 
+    # Excelファイルを作成
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Reservations"
 
+    # ヘッダーのテキストを追加 (1行目)
+    header_text = f"{start_date}から{end_date}分 弁当予約者一覧"
+    ws.merge_cells('A1:F1')  # ヘッダーテキスト用の結合セル
+    header_cell = ws['A1']
+    header_cell.value = header_text
+    header_cell.font = Font(size=16, bold=True)
+    header_cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 30
 
+    # ヘッダーを2行目に追加
+    headers = ["日付", "氏名", "ごはん", "おかず", "受取済", "振替元"]
+    ws.append(headers)
 
+    # ヘッダーのスタイル設定
+    for col_num, header in enumerate(headers, start=1):
+        cell = ws.cell(row=2, column=col_num)
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # データを3行目から追加
+    row_num = 3
+    for reservation in reservations_by_date:
+        ws.append([
+            reservation.reservation_date.strftime("%Y-%m-%d"),
+            f"{reservation.user.last_name} {reservation.user.first_name}",
+            f"{reservation.rice_gram}g" if reservation.rice else "なし",
+            "あり" if reservation.side_dish else "なし",
+            "はい" if reservation.received else "いいえ",
+            reservation.original_user_name or "なし"
+        ])
+        row_num += 1
+
+    # 固定幅設定: 日付列の幅を狭くする (例: 15文字幅)
+    ws.column_dimensions['A'].width = 15  # 日付列
+    # 他の列の自動調整
+    for col in ws.iter_cols(min_col=2, max_col=len(headers)):
+        max_length = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = max_length + 6
+
+    # 枠線を追加
+    thin_border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin")
+    )
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=len(headers)):
+        for cell in row:
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # フィルターをヘッダー行に追加（2行目にフィルター適用）
+    ws.auto_filter.ref = f"A2:F{ws.max_row}"
+
+    # ファイル名に期間を動的に設定
+    filename = f"reservations_{start_date}_to_{end_date}.xlsx"
+
+    # レスポンスにExcelファイルを追加
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
 
 def create_reservation(request):
     if request.method == 'POST':
