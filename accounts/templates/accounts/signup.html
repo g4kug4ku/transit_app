@@ -8,7 +8,8 @@
     <style>
         body, html {
             height: 100%;
-            margin: 0;
+            margin-top: 30px;
+            margin-bottom: 30px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -45,7 +46,7 @@
     </style>
 </head>
 <body>
-    <div class="signup-container">
+    <div class="signup-container" style="margin-bottom: 30px;">
         <h1>Transit App</h1>
         <form method="post" action="{% url 'signup' %}">
             {% csrf_token %}
@@ -60,14 +61,24 @@
             <div class="mb-3">
                 <label for="username" class="form-label">ユーザー名</label>
                 <input type="text" name="username" class="form-control" id="username" required>
+                <!-- ユーザー名のエラーを表示 -->
+                {% if form.username.errors %}
+                    <div class="text-danger">{{ form.username.errors }}</div>
+                {% endif %}
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">パスワード</label>
                 <input type="password" name="password1" class="form-control" id="password" required>
+                {% if form.password1.errors %}
+                    <div class="text-danger">{{ form.password1.errors }}</div>
+                {% endif %}
             </div>
             <div class="mb-3">
                 <label for="password2" class="form-label">パスワード（確認用）</label>
                 <input type="password" name="password2" class="form-control" id="password2" required>
+                {% if form.password2.errors %}
+                    <div class="text-danger">{{ form.password2.errors }}</div>
+                {% endif %}
             </div>
             <button type="submit" class="btn btn-custom w-100">サインアップ</button>
         </form>

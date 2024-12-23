@@ -15,6 +15,11 @@
             border-bottom: 1px solid #eb6100; /* 下にオレンジ色のボーダーを追加 */
             justify-content: center; /* 全体を中央揃え */
         }
+        .navbar-text {
+            margin-right: auto; /* 左端に配置 */
+            color: #EB6100;
+            font-size: 16px;
+        }
         .navbar-brand {
             color: #EB6100;
             font-size: 24px;
@@ -81,12 +86,19 @@
         .img-fluid {
             max-width: 100%;
             height: auto;
-        } 
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-light">
         <div class="container-fluid">
+            {% if user.is_authenticated %}
+                <span class="navbar-text">
+                    <i class="bi bi-person-circle"></i> <strong>{{ user.username }}</strong>
+                </span>
+            {% else %}
+                <a href="{% url 'login' %}" class="navbar-text">ログイン</a>
+            {% endif %}
             <!-- 中央に配置されたブランド名 -->
             <div class="navbar-brand">Transit App</div>
             <!-- ハンバーガーメニュー -->
@@ -104,15 +116,16 @@
         </div>
         <div class="offcanvas-body">
             <ul class="list-unstyled">
-                <li><a href="{% url 'index' %}" class="text-dark" style="text-decoration:none;">投稿一覧</a></li>
-                <li><a href="{% url 'bento_reservation' %}" class="text-dark" style="text-decoration:none;">弁当予約</a></li>
-                <li><a href="https://repo.transit-iko.net/" class="text-dark" style="text-decoration:none;">業務日誌</a></li>
+                <li class="mb-3"><a href="{% url 'index' %}" class="text-dark" style="text-decoration:none;">投稿一覧</a></li>
+                <li class="mb-3"><a href="{% url 'bento_reservation' %}" class="text-dark" style="text-decoration:none;">弁当予約</a></li>
+                <li class="mb-3"><a href="https://repo.transit-iko.net/" class="text-dark" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">業務日誌</a></li>
                 <!-- <li><a href="{% url 'kakeibo_list' %}" class="text-dark">家計簿</a></li> -->
-                <li><a href="{% url 'song_request_list' %}" class="text-dark" style="text-decoration:none;">曲をリクエスト</a></li>
+                <li class="mb-4"><a href="{% url 'song_request_list' %}" class="text-dark" style="text-decoration:none;">曲をリクエスト</a></li>
                 {% if user.is_staff %}  <!-- 管理者の場合のみ表示 -->
-                <li><a href="{% url 'admin_bento_reservation_list' %}" class="text-dark" style="text-decoration:none;">弁当予約者一覧</a></li>
-                <li><a href="https://gakugaku.pythonanywhere.com/admin/accounts/bentoreservation/" class="text-dark" style="text-decoration:none;">管理サイト</a></li>
-                <li><a href="{% url 'upload_menu' %}" style="text-decoration:none;">献立をアップロード</a></li>
+                <hr>
+                <li class="mb-3"><a href="{% url 'admin_bento_reservation_list' %}" class="text-dark" style="text-decoration:none;">弁当予約者一覧</a></li>
+                <li class="mb-3"><a href="https://gakugaku.pythonanywhere.com/admin/accounts/bentoreservation/" class="text-dark" style="text-decoration:none;">管理サイト</a></li>
+                <li class="mb-4"><a href="{% url 'upload_menu' %}" class="text-dark" style="text-decoration:none;">献立をアップロード</a></li>
                 {% endif %}
             </ul>
             <form method="POST" action="{% url 'logout' %}">

@@ -28,12 +28,12 @@
     <!-- 予約フォーム -->
     <form method="POST">
         {% csrf_token %}
-        
+
         <!-- 日付選択フィールド（カレンダーから選択できるように修正） -->
         <div class="mb-3">
             <label for="reservation_date" class="form-label">日付を選択</label>
             <input type="date" id="reservation_date" name="reservation_date" class="form-control" value="{{ form.reservation_date.value|default_if_none:'' }}">
-            
+
             <!-- エラーメッセージを表示 -->
             {% if form.reservation_date.errors %}
                 <div class="alert alert-danger">
@@ -83,7 +83,7 @@
     </form>
 
     <!-- 予約一覧リンク -->
-    <div class="mt-4">
+    <div class="mt-4" style="margin-bottom: 30px">
         <a href="{% url 'reservation_list' %}" class="btn btn-secondary">予約一覧</a>
     </div>
 </div>
@@ -95,7 +95,7 @@
     const rice = document.getElementById('rice');
     const riceGramSection = document.getElementById('rice-gram-selection');
     const submitBtn = document.getElementById('submit-btn');
-    
+
     // "おかずとごはんを頼む"がチェックされたときの処理
     orderBoth.addEventListener('change', function() {
         if (this.checked) {

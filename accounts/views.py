@@ -21,6 +21,8 @@ import json
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter
+import os
+from django.conf import settings
 
 # Create your views here.
 def signup(request):
@@ -47,12 +49,12 @@ def post_list(request):
 @login_required
 def post_detail(request, slug):
     post = get_object_or_404(Post, slug=slug)
-    
+
     # ユーザーがまだ既読でなければ追加
     if request.user not in post.read_by.all():
         post.read_by.add(request.user)
-    
-    
+
+
     comments = post.comments.all()
     if request.method == 'POST':
         form = CommentForm(request.POST)
@@ -64,19 +66,19 @@ def post_detail(request, slug):
             return redirect('post_detail', slug=post.slug)
     else:
         form = CommentForm()
-    
+
     # 新規コメントのフラグを消す
     if post.new_comment:
         post.new_comment = False
         post.save()
-            
+
     context = {
         'post': post,
         'decoded_file_url': decode_filename(post.attached_file.url) if post.attached_file else None,
         'comments': post.comments.all(),
         'form': form,
     }
-        
+
     return render(request, 'accounts/post_detail.html', context)
 
 @login_required
@@ -112,15 +114,15 @@ def bento_reservation(request):
             return redirect('reservation_list')
     else:
         form = BentoReservationForm(request=request)  # GETリクエスト時もrequestを渡す
-    
-    
+
+
     latest_menu = MenuUpload.objects.last()
-    
+
     # 献立が存在し、PDFかどうかをチェック
     is_pdf = False
     if latest_menu and latest_menu.file.url.endswith(".pdf"):
         is_pdf = True
-    
+
     return render(request, 'accounts/bento_reservation.html', {'form': form, 'latest_menu': latest_menu, 'is_pdf': is_pdf})
 
 @login_required
@@ -150,7 +152,7 @@ def reservation_list(request):
 
 def cancel_reservation(request, reservation_id):
     reservation = get_object_or_404(BentoReservation, id=reservation_id, user=request.user)
-    
+
     # 予約日の前日の16時を取得
     cancel_deadline = reservation.reservation_date - timedelta(days=1)
     cancel_deadline = datetime.combine(cancel_deadline, datetime.min.time()).replace(hour=16)
@@ -212,7 +214,7 @@ def admin_bento_reservation_list(request):
 def export_bento_reservations(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-    
+
     reservations_by_date = BentoReservation.objects.filter(
         reservation_date__range=[start_date, end_date]
     ).order_by('reservation_date')
@@ -315,7 +317,7 @@ def generate_order_sheet(request):
 
     # デバッグ用のプリント
     print(f"おかず: {side_dish}, 100g: {rice_100g}, 160g: {rice_160g}, 200g: {rice_200g}")
-    
+
     context = {
         'side_dish': side_dish,
         'rice_100g': rice_100g,
@@ -344,7 +346,11 @@ def upload_menu(request):
 @login_required
 def delete_menu(request, menu_id):
     menu = get_object_or_404(MenuUpload, id=menu_id)
+    file_path = os.path.join(settings.MEDIA_ROOT, str(menu.file))
     menu.delete()
+    # ファイルが存在する場合は削除
+    if os.path.exists(file_path):
+        os.remove(file_path)
     messages.success(request, '献立が削除されました。')
     return redirect('upload_menu')
 
@@ -405,7 +411,7 @@ def kakeibo_detail(request, pk):
             return redirect('kakeibo_list')
     else:
         form = KakeiboForm(instance=entry)
-    
+
     return render(request, 'accounts/kakeibo_detail.html', {
         'entry': entry,
         'income_categories': income_categories,
@@ -418,7 +424,7 @@ def kakeibo_create(request):
         form = KakeiboForm(request.POST, request.FILES)
         if form.is_valid():
             form.instance.user = request.user  # ユーザー情報を設定
-            form.instance.created_at = form.cleaned_data['created_at'] 
+            form.instance.created_at = form.cleaned_data['created_at']
             form.save()  # データベースに保存
             messages.success(request, "収支が追加されました！")
             return redirect('kakeibo_list')  # 保存後にリストページへリダイレクト
