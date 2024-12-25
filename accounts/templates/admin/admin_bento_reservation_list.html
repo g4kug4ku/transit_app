@@ -6,10 +6,10 @@
 <form method="GET">
     <label for="start_date">開始日:</label>
     <input type="date" id="start_date" name="start_date" required>
-    
+
     <label for="end_date">終了日:</label>
     <input type="date" id="end_date" name="end_date" required>
-    
+
     <button type="submit">検索</button>
 </form>
 
@@ -32,12 +32,12 @@
             <li>ごはん 160g: {{ rice_160g_counts|get_item:date }}</li>
             <li>ごはん 200g: {{ rice_200g_counts|get_item:date }}</li>
         </ul>
-    
+
         <div class="text-center">
             <a href="{% url 'generate_order_sheet' %}?date={{ date }}&side_dish={{ side_dish_counts|get_item:date }}&rice_100g={{ rice_100g_counts|get_item:date }}&rice_160g={{ rice_160g_counts|get_item:date }}&rice_200g={{ rice_200g_counts|get_item:date }}" class="btn btn-warning">発注書作成</a>
         </div>
 
-        <h4>予約者一覧</h4>
+        <h4>予約者一覧（{{ reservations|length }}名）</h4>
         <table class="table table-bordered table-striped">
             <tr>
                 <th>氏名</th>
