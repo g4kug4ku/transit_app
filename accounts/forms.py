@@ -98,12 +98,12 @@ class BentoReservationForm(forms.ModelForm):
         if reservation_date in unavailable_days:
             raise ValidationError("選択した日は予約不可です。別の日を選択してください。")
 
-        # 前日の16時を過ぎたら予約できないロジック
+        # 前日の17時を過ぎたら予約できないロジック
         today = timezone.localdate()
         if reservation_date == today + timedelta(days=1):
-            cancel_deadline = datetime.combine(today, time(16, 0))
+            cancel_deadline = datetime.combine(today, time(17, 0))
             if timezone.now() > timezone.make_aware(cancel_deadline):
-                raise ValidationError("翌日分の予約は前日の16時までです。")
+                raise ValidationError("翌日分の予約は前日の17時までです。")
 
         # 予約日が過去の日付でないかのチェック (任意で追加)
         if reservation_date < date.today():
