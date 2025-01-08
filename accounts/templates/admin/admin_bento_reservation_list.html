@@ -41,7 +41,7 @@
         <table class="table table-bordered table-striped">
             <tr>
                 <th>氏名</th>
-                <th>予約内容</th>
+                <th>予約内容(日時)</th>
                 <th>受取済</th>
                 <th>振替元</th>
             </tr>
@@ -52,6 +52,8 @@
                     おかず: {% if reservation.side_dish %}あり{% else %}なし{% endif %}
 
                     ごはん: {% if reservation.rice %}{{ reservation.rice_gram }}g{% else %}なし{% endif %}
+
+                    {{ reservation.created_at|date:"(Y.m.d H:i)" }}
                 </td>
                 <td>{% if reservation.received %}はい{% else %}いいえ{% endif %}</td>
                 <td>{{ reservation.original_user_name }}</td>
