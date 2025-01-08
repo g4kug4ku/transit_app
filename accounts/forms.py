@@ -100,10 +100,13 @@ class BentoReservationForm(forms.ModelForm):
 
         # 前日の17時を過ぎたら予約できないロジック表記上は17時までだが設定は18時まで
         today = timezone.localdate()
+        """
+        期限一時停止
         if reservation_date == today + timedelta(days=1):
             cancel_deadline = datetime.combine(today, time(18, 0))
             if timezone.now() > timezone.make_aware(cancel_deadline):
                 raise ValidationError("翌日分の予約は前日の17時までです。")
+        """
 
         # 予約日が過去の日付でないかのチェック (任意で追加)
         if reservation_date < date.today():
