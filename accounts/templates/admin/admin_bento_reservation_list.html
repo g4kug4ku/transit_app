@@ -5,10 +5,10 @@
 
 <form method="GET">
     <label for="start_date">開始日:</label>
-    <input type="date" id="start_date" name="start_date" required>
+    <input type="date" id="start_date" name="start_date" value="{{ start_date }}" required>
 
     <label for="end_date">終了日:</label>
-    <input type="date" id="end_date" name="end_date" required>
+    <input type="date" id="end_date" name="end_date" value="{{ end_date }}" required>
 
     <button type="submit">検索</button>
 </form>

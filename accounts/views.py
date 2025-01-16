@@ -7,7 +7,7 @@ from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, 
 from django.urls import resolve, reverse
 from .utils import decode_filename
 from django.contrib import messages
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
@@ -174,33 +174,38 @@ def receive_bento(request, reservation_id):
     return redirect(reverse('reservation_list'))
 
 def admin_bento_reservation_list(request):
-    start_date_str = request.GET.get('start_date')
-    end_date_str = request.GET.get('end_date')
+    today = date.today()
 
-    reservations_by_date = {}  # 日付ごとの予約内容を格納する辞書
+    # 日付文字列を取得またはデフォルト値を設定
+    start_date_str = request.GET.get('start_date', today.strftime('%Y-%m-%d'))
+    end_date_str = request.GET.get('end_date', today.strftime('%Y-%m-%d'))
 
-    if start_date_str and end_date_str:
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    # 日付型に変換
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
 
-        # 指定された期間の予約を取得
-        for n in range((end_date - start_date).days + 1):
-            current_date = start_date + timedelta(n)
-            reservations = BentoReservation.objects.filter(reservation_date=current_date)
+    # 日付ごとの予約データを作成
+    reservations_by_date = {}
+    for n in range((end_date - start_date).days + 1):
+        current_date = start_date + timedelta(n)
+        reservations = BentoReservation.objects.filter(reservation_date=current_date)
+        if reservations.exists():  # 予約が存在する日付のみ追加
             reservations_by_date[current_date] = reservations
 
-    # 各日の合計数を集計
+    # 各日の予約集計
     side_dish_counts = {}
     rice_100g_counts = {}
     rice_160g_counts = {}
     rice_200g_counts = {}
 
-    for date, reservations in reservations_by_date.items():
-        side_dish_counts[date] = reservations.filter(side_dish=True).count()
-        rice_100g_counts[date] = reservations.filter(rice=True, rice_gram=100).count()
-        rice_160g_counts[date] = reservations.filter(rice=True, rice_gram=160).count()
-        rice_200g_counts[date] = reservations.filter(rice=True, rice_gram=200).count()
+    if reservations_by_date:  # データが存在する場合のみ処理
+        for current_date, reservations in reservations_by_date.items():
+            side_dish_counts[current_date] = reservations.filter(side_dish=True).count()
+            rice_100g_counts[current_date] = reservations.filter(rice=True, rice_gram=100).count()
+            rice_160g_counts[current_date] = reservations.filter(rice=True, rice_gram=160).count()
+            rice_200g_counts[current_date] = reservations.filter(rice=True, rice_gram=200).count()
 
+    # テンプレートへデータを渡す
     return render(request, 'admin/admin_bento_reservation_list.html', {
         'reservations_by_date': reservations_by_date,
         'start_date': start_date_str,
