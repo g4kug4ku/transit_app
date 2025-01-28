@@ -46,15 +46,15 @@ class Comment(models.Model):
         return f"Comment by {self.user} on {self.post}"
 
 class BentoReservation(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
-    reservation_date = models.DateField()
-    side_dish = models.BooleanField(default=False)
-    rice = models.BooleanField(default=False)
-    rice_gram = models.IntegerField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations', verbose_name='予約者')
+    reservation_date = models.DateField(verbose_name='予約日')
+    side_dish = models.BooleanField(default=False, verbose_name='おかず')
+    rice = models.BooleanField(default=False, verbose_name='ごはん')
+    rice_gram = models.IntegerField(null=True, blank=True, verbose_name='グラム数')
     received = models.BooleanField(default=False)
     memo = models.TextField(blank=True, null=True)
-    transfer_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='transferred_reservations')
-    original_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='original_reservations')
+    transfer_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='transferred_reservations', verbose_name='振替先')
+    original_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='original_reservations', verbose_name='振替元')
     created_at = models.DateTimeField(auto_now_add=True, null=True)  # null=True を追加
 
     def __str__(self):
@@ -159,3 +159,26 @@ class SongRequest(models.Model):
 
     def __str__(self):
         return f"{self.song_name} - {self.artist}"
+
+#映画
+class FavoriteMovies(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_movies')
+    rank_3 = models.CharField(max_length=255, verbose_name="第3位の映画")
+    reason_3 = models.TextField(verbose_name="第3位の理由")
+    rank_2 = models.CharField(max_length=255, verbose_name="第2位の映画")
+    reason_2 = models.TextField(verbose_name="第2位の理由")
+    rank_1 = models.CharField(max_length=255, verbose_name="第1位の映画")
+    reason_1 = models.TextField(verbose_name="第1位の理由")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.user.username}'s Favorite Movies"
+
+class FavoriteMoviesComment(models.Model):
+    favorite_movies = models.ForeignKey(FavoriteMovies, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField(verbose_name="コメント内容")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.favorite_movies}"

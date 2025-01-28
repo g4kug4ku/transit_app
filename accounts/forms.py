@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload, KakeiboEntry, SongRequest
+from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload, KakeiboEntry, SongRequest, FavoriteMovies, FavoriteMoviesComment
 from django.utils import timezone
 import jpholiday
 import datetime
@@ -202,4 +202,31 @@ class SongRequestForm(forms.ModelForm):
         widgets = {
             'artist': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'アーティスト名'}),
             'song_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '曲名'}),
+        }
+
+#映画
+class FavoriteMoviesForm(forms.ModelForm):
+    class Meta:
+        model = FavoriteMovies  # モデルを指定
+        fields = ['rank_3', 'reason_3', 'rank_2', 'reason_2', 'rank_1', 'reason_1']
+        labels = {
+            'rank_3': '第3位の映画',
+            'reason_3': '第3位の理由',
+            'rank_2': '第2位の映画',
+            'reason_2': '第2位の理由',
+            'rank_1': '第1位の映画',
+            'reason_1': '第1位の理由',
+        }
+        widgets = {
+            'reason_3': forms.Textarea(attrs={'class': 'form-control textarea-large'}),
+            'reason_2': forms.Textarea(attrs={'class': 'form-control textarea-large'}),
+            'reason_1': forms.Textarea(attrs={'class': 'form-control textarea-large'}),
+        }
+
+class FavoriteMoviesCommentForm(forms.ModelForm):
+    class Meta:
+        model = FavoriteMoviesComment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
