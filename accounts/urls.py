@@ -23,4 +23,8 @@ urlpatterns = [
     path('song_requests/create/', views.song_request_create, name='song_request_create'),
     path('song_request/<int:request_id>/like/', views.toggle_like, name='toggle_like'),
     path('song_request/<int:request_id>/delete/', views.delete_song_request, name='delete_song_request'),
+    path('favorite_movies/', views.favorite_movies_list, name='favorite_movies_list'),
+    path('favorite_movies/new/', views.favorite_movies_create, name='favorite_movies_create'),
+    path('favorite_movies/<int:pk>/', views.favorite_movies_detail, name='favorite_movies_detail'),
+    path('favorite_movies/<int:pk>/delete/', views.favorite_movies_delete, name='favorite_movies_delete'),
 ]

@@ -1,0 +1,38 @@
+{% extends 'accounts/base.html' %}
+{% block detail %}
+<div class="container mt-4">
+    <a href="{% url 'favorite_movies_list' %}" class="btn btn-eb6100 mb-3">← 好きな映画トップ3に戻る</a>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ favorite_movies.user.last_name }} {{ favorite_movies.user.first_name }}さんが好きな映画TOP3</h5>
+            <p><strong>第3位:</strong> {{ favorite_movies.rank_3 }}</p>
+            <p>{{ favorite_movies.reason_3 }}</p>
+            <p><strong>第2位:</strong> {{ favorite_movies.rank_2 }}</p>
+            <p>{{ favorite_movies.reason_2 }}</p>
+            <p><strong>第1位:</strong> {{ favorite_movies.rank_1 }}</p>
+            <p>{{ favorite_movies.reason_1 }}</p>
+        </div>
+    </div>
+    <hr>
+    <div class="comments-section mt-4">
+        <h5>コメント</h5>
+        <div>
+            {% for comment in comments %}
+                <div class="comment-bubble text-white bg-eb6100 p-3 mb-3 rounded float-start">
+                    <strong>{{ comment.user.last_name }} {{ comment.user.first_name }}</strong>
+                    <span class="text-muted">{{ comment.created_at|date:"Y年m月d日 H:i" }}</span>
+                    <p>{{ comment.content }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="clearfix"></div>
+        <hr>
+        <h5>コメントを投稿する</h5>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-eb6100">送信</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

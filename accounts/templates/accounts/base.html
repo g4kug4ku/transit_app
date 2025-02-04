@@ -87,6 +87,19 @@
             max-width: 100%;
             height: auto;
         }
+        .rank {
+            text-align: left; /* ランキングを左揃え */
+            margin-left: 10px; /* 左に少し余白を追加 */
+        }
+        .button-group {
+            text-align: left; /* ボタンを左揃え */
+            margin-top: 10px; /* 上部に少し余白を追加 */
+        }
+        .button-group a,
+        .button-group form {
+            display: inline-block; /* ボタンをインライン表示にする */
+            margin-right: 10px; /* ボタン間のスペースを調整 */
+        }
     </style>
 </head>
 <body>
@@ -121,6 +134,7 @@
                 <li class="mb-3"><a href="https://repo.transit-iko.net/" class="text-dark" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">業務日誌</a></li>
                 <!-- <li><a href="{% url 'kakeibo_list' %}" class="text-dark">家計簿</a></li> -->
                 <li class="mb-4"><a href="{% url 'song_request_list' %}" class="text-dark" style="text-decoration:none;">曲をリクエスト</a></li>
+                <li><a href="{% url 'favorite_movies_list' %}" class="text-dark" style="text-decoration:none;">好きな映画トップ3</a></li>
                 {% if user.is_staff %}  <!-- 管理者の場合のみ表示 -->
                 <hr>
                 <li class="mb-3"><a href="{% url 'admin_bento_reservation_list' %}" class="text-dark" style="text-decoration:none;">弁当予約者一覧</a></li>

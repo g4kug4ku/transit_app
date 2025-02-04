@@ -2,14 +2,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm, SongRequestForm
-from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry, SongRequest
+from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm, SongRequestForm, FavoriteMoviesForm, FavoriteMoviesCommentForm
+from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry, SongRequest, FavoriteMovies, FavoriteMoviesComment
 from django.urls import resolve, reverse
 from .utils import decode_filename
 from django.contrib import messages
 from datetime import date, datetime, timedelta
 from django.utils import timezone
-from django.http import HttpResponse, JsonResponse
+from django.utils.timezone import now
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.db.models import Q, Sum, Count
 from collections import defaultdict
@@ -23,6 +24,9 @@ from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter
 import os
 from django.conf import settings
+import requests
+from django.core.cache import cache
+from django.urls import reverse
 
 # Create your views here.
 def signup(request):
@@ -38,8 +42,54 @@ def signup(request):
 
 @login_required
 def index(request):
-    posts = Post.objects.all().order_by('-created_at')
-    return render(request, 'accounts/index.html', {'posts': posts})
+    posts = Post.objects.all().order_by('-created_at')[:10]
+    song_requests = SongRequest.objects.all()
+    # 新着情報のデータを取得
+    one_day_ago = now() - timedelta(days=1)
+    # 新着映画
+    new_movies = FavoriteMovies.objects.filter(created_at__gte=one_day_ago)
+    # 新着リクエスト
+    new_requests = SongRequest.objects.filter(request_date__gte=one_day_ago)
+    # 自分の好きな映画への新しいコメント
+    recent_favorite_movie_comments = FavoriteMoviesComment.objects.filter(
+        created_at__gte=one_day_ago, 
+        favorite_movies__user=request.user  # 自分の投稿へのコメント
+    ).exclude(user=request.user)  # 自分が投稿したコメントは除外
+    # 新着情報を1つのリストにまとめる
+    recent_updates = []
+    for movie in new_movies:
+        recent_updates.append({
+            "type": "movie",
+            "title": f"{movie.user.last_name} {movie.user.first_name}さんが好きな映画を投稿しました",
+            "url": reverse("favorite_movies_detail", args=[movie.pk]),
+            "created_at": movie.created_at,
+        })
+    
+    for requests in new_requests:
+        recent_updates.append({
+            "type": "song_request",
+            "title": f"{requests.user.last_name} {requests.user.first_name}さんが曲をリクエストしました",
+            "url": reverse("song_request_list"),
+            "created_at": requests.request_date,
+        })
+    
+    for comment in recent_favorite_movie_comments:
+        link = reverse('favorite_movies_detail', args=[comment.favorite_movies.id])
+        print(f"Generated link: {link}") 
+        recent_updates.append({
+            'type': 'comment',
+            'title': f"{comment.user.last_name} {comment.user.first_name}さんがあなたの好きな映画にコメントしました",
+            'url': link,
+            'created_at': comment.created_at,
+        })
+
+    # 作成日時で並べ替え
+    recent_updates.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    return render(request, 'accounts/index.html', {
+        'posts': posts,
+        'recent_updates': recent_updates,
+    })
 
 def post_list(request):
     posts = Post.objects.all()
@@ -501,3 +551,56 @@ def delete_song_request(request, request_id):
     song_request = get_object_or_404(SongRequest, id=request_id, user=request.user)
     song_request.delete()
     return JsonResponse({'success': True})
+
+#映画
+@login_required
+def favorite_movies_list(request):
+    movies = FavoriteMovies.objects.all().order_by('-created_at')
+    return render(request, 'accounts/favorite_movies_list.html', {'movies': movies})
+
+@login_required
+def favorite_movies_create(request):
+    if request.method == 'POST':
+        form = FavoriteMoviesForm(request.POST)
+        if form.is_valid():
+            favorite_movies = form.save(commit=False)
+            favorite_movies.user = request.user
+            favorite_movies.save()
+            return redirect('favorite_movies_list')
+    else:
+        form = FavoriteMoviesForm()
+    return render(request, 'accounts/favorite_movies_create.html', {'form': form})
+
+@login_required
+def favorite_movies_detail(request, pk):
+    favorite_movie = get_object_or_404(FavoriteMovies, pk=pk)  # 正しいオブジェクトを取得
+    comments = FavoriteMoviesComment.objects.filter(favorite_movies=favorite_movie).order_by('-created_at')
+
+    if request.method == 'POST':
+        form = FavoriteMoviesCommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.user = request.user
+            comment.favorite_movies = favorite_movie  # 外部キーを正しく設定
+            comment.save()
+            messages.success(request, "コメントを追加しました。")
+            return redirect('favorite_movies_detail', pk=pk)
+    else:
+        form = FavoriteMoviesCommentForm()
+
+    return render(request, 'accounts/favorite_movies_detail.html', {
+        'favorite_movies': favorite_movie,
+        'comments': comments,
+        'form': form,
+    })
+
+@login_required
+def favorite_movies_delete(request, pk):
+    movie = get_object_or_404(FavoriteMovies, pk=pk)
+
+    # ユーザーが一致する場合のみ削除を許可
+    if movie.user == request.user:
+        movie.delete()
+        return HttpResponseRedirect(reverse('favorite_movies_list'))
+    else:
+        return HttpResponseRedirect(reverse('favorite_movies_list'))  # 不正な削除試行時のリダイレクト先

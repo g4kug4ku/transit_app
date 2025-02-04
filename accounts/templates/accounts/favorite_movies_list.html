@@ -1,0 +1,32 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">みんなの好きな映画トップ3</h1>
+    <div class="text-center mb-4">
+        <a href="{% url 'favorite_movies_create' %}" class="btn btn-primary">好きな映画を投稿</a>
+    </div>
+    <div class="row justify-content-center">
+        {% for movie in movies %}
+        <div class="col-md-6 col-lg-4 mb-4 d-flex align-items-stretch">
+            <div class="card text-center w-100 shadow">
+                <div class="card-body">
+                    <h5 class="card-title">{{ movie.user.last_name }} {{ movie.user.first_name }}さんが好きな映画TOP3</h5>
+                    <p class="rank">第3位: {{ movie.rank_3 }}</p>
+                    <p class="rank">第2位: {{ movie.rank_2 }}</p>
+                    <p class="rank">第1位: {{ movie.rank_1 }}</p>
+                    <div class="button-group">
+                        <a href="{% url 'favorite_movies_detail' movie.pk %}" class="btn btn-primary">詳細</a>
+                        {% if movie.user == user %}
+                        <form method="post" action="{% url 'favorite_movies_delete' movie.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">削除</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

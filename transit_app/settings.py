@@ -137,3 +137,10 @@ MEDIA_URL = '/media/'
 
 # メディアファイルの保存場所
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-weather-data-cache',
+    }
+}

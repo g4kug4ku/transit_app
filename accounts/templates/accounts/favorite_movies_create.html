@@ -1,0 +1,84 @@
+{% extends 'accounts/base.html' %}
+{% load form_filters %}  <!-- カスタムフィルターをロード -->
+
+{% block detail %}
+<div class="container mt-4">
+    <!-- 戻るボタン -->
+    <a href="{% url 'favorite_movies_list' %}" class="btn btn-eb6100 mb-3">← 一覧に戻る</a>
+
+    <!-- フォームタイトル -->
+    <div class="text-center">
+        <h2 class="text-eb6100">好きな映画トップ3を投稿</h2>
+        <p class="text-muted">あなたの好きな映画トップ3を教えてください。</p>
+    </div>
+
+    <!-- 投稿フォーム -->
+    <form method="post" class="bg-light p-4 rounded shadow-sm">
+        {% csrf_token %}
+        
+        <!-- 第3位 -->
+        <div class="form-floating mb-4">
+            {{ form.rank_3|add_class:"form-control" }}
+            <label for="{{ form.rank_3.id_for_label }}">第3位の映画</label>
+        </div>
+        <div class="form-floating mb-4">
+            {{ form.reason_3|add_class:"form-control" }}
+            <label for="{{ form.reason_3.id_for_label }}">第3位の理由</label>
+        </div>
+        
+        <!-- 第2位 -->
+        <div class="form-floating mb-4">
+            {{ form.rank_2|add_class:"form-control" }}
+            <label for="{{ form.rank_2.id_for_label }}">第2位の映画</label>
+        </div>
+        <div class="form-floating mb-4">
+            {{ form.reason_2|add_class:"form-control" }}
+            <label for="{{ form.reason_2.id_for_label }}">第2位の理由</label>
+        </div>
+        
+        <!-- 第1位 -->
+        <div class="form-floating mb-4">
+            {{ form.rank_1|add_class:"form-control" }}
+            <label for="{{ form.rank_1.id_for_label }}">第1位の映画</label>
+        </div>
+        <div class="form-floating mb-4">
+            {{ form.reason_1|add_class:"form-control" }}
+            <label for="{{ form.reason_1.id_for_label }}">第1位の理由</label>
+        </div>
+    
+        <!-- 投稿ボタン -->
+        <button type="submit" class="btn btn-eb6100 w-100">投稿</button>
+    </form>
+</div>
+
+<!-- カスタムスタイル -->
+<style>
+    .text-eb6100 {
+        color: #eb6100;
+    }
+    .btn-eb6100 {
+        background-color: #eb6100;
+        color: white;
+        border-radius: 25px;
+        padding: 10px 20px;
+    }
+    .btn-eb6100:hover {
+        background-color: #d45300;
+    }
+    form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .form-floating label {
+        color: #888;
+    }
+    .form-floating .form-control:focus {
+        border-color: #eb6100;
+        box-shadow: 0 0 5px rgba(235, 97, 0, 0.5);
+    }
+    textarea.form-control {
+        height: auto !important; /* デフォルト設定を無効化 */
+        min-height: 150px;       /* 必要に応じて調整 */
+    }
+</style>
+{% endblock %}
