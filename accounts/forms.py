@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload, KakeiboEntry, SongRequest, FavoriteMovies, FavoriteMoviesComment
+from .models import Comment, BentoReservation, BentoUnavailableDay, MenuUpload, KakeiboEntry, SongRequest, FavoriteMovies, FavoriteMoviesComment, BBSPost, BBSComment
 from django.utils import timezone
 import jpholiday
 import datetime
@@ -230,3 +230,13 @@ class FavoriteMoviesCommentForm(forms.ModelForm):
         widgets = {
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+class BBSPostForm(forms.ModelForm):
+    class Meta:
+        model = BBSPost
+        fields = ["title", "content"]
+
+class BBSCommentForm(forms.ModelForm):
+    class Meta:
+        model = BBSComment
+        fields = ["content"]

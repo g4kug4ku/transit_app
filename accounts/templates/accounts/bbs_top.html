@@ -1,0 +1,33 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">なんでも掲示板</h1>
+
+    <!-- 新規投稿ボタンを中央揃え -->
+    <div class="d-flex justify-content-center mb-3">
+        <a href="{% url 'new_bbs_post' %}" class="btn btn-eb6100">新規投稿</a>
+    </div>
+
+    <!-- 投稿一覧を中央揃えにする -->
+    <div class="row justify-content-center">
+        {% for post in posts %}
+            <div class="col-md-8 mb-4">  <!-- 投稿のカードを中央に寄せる -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ post.title }}</h5>
+                        <p class="card-text"><small class="text-muted">{{ post.created_at|date:"Y年m月d日 H:i" }}</small></p>
+                        <a href="{% url 'bbs_detail' post.id %}" class="btn btn-eb6100">詳細</a>
+                        {% if post.user == user %}
+                            <form method="post" action="{% url 'delete_bbs_post' post.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">削除</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

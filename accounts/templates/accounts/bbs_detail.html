@@ -1,0 +1,113 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'bbs_top' %}" class="btn btn-eb6100 mb-3">← なんでも掲示板に戻る</a>
+
+    <!-- 投稿詳細 -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">{{ bbs_post.title }}</h3>  <!-- タイトル表示 -->
+            <p class="card-text"><small class="text-muted">
+                {{ bbs_post.created_at|date:"Y年m月d日 H:i" }}  <!-- 投稿日時 -->
+            </small></p>
+            <p class="card-text">{{ bbs_post.content }}</p>  <!-- 投稿本文 -->
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- コメントエリア -->
+    <div class="comments-section mt-4">
+        <h5>コメント</h5>
+        <div>
+            {% for comment in comments %}
+                <!-- 親コメント -->
+                <div class="comment-bubble text-white bg-eb6100 p-3 mb-3 rounded float-start w-75">
+                    <strong>{{ comment.user.last_name }} {{ comment.user.first_name }}</strong>
+                    <span class="text-muted">{{ comment.created_at|date:"Y年m月d日 H:i" }}</span>
+                    <p>{{ comment.content }}</p>
+
+                    <!-- 返信ボタン -->
+                    <a href="#" 
+                        class="reply-button text-white" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#replyModal" 
+                        data-comment-id="{{ comment.id }}"
+                        data-comment-user="{{ comment.user.last_name }} {{ comment.user.first_name }}">
+                        <i class="bi bi-reply"></i> 返信
+                    </a>
+
+                    <!-- 返信リスト（すべて親コメントの同じ階層に表示） -->
+                    <div class="reply-list">
+                        {% include 'accounts/reply_thread.html' with replies=comment.replies.all %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="clearfix"></div>
+
+        <hr>
+
+        <!-- コメントフォーム -->
+        <h5>コメントを投稿する</h5>
+        <form method="post">
+            {% csrf_token %}
+            {{ comment_form.as_p }}
+            <button type="submit" class="btn btn-eb6100">送信</button>
+        </form>
+    </div>
+</div>
+
+<!-- 返信用モーダルウィンドウ -->
+<div class="modal fade" id="replyModal" tabindex="-1" aria-labelledby="replyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replyModalLabel">返信を投稿</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>返信先:</strong> <span id="replyToUser"></span></p> <!-- ここに返信相手の名前を表示 -->
+
+                <form method="post" id="replyForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="parent_comment_id" id="parentCommentId">
+                    <input type="hidden" name="parent_comment_user" id="parentCommentUser">
+                    
+                    <div class="mb-3">
+                        <label for="replyContent" class="form-label">返信内容</label>
+                        <textarea name="content" id="replyContent" class="form-control" rows="3" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">返信</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const replyButtons = document.querySelectorAll(".reply-button");
+        const replyForm = document.getElementById("replyForm");
+        const parentCommentIdInput = document.getElementById("parentCommentId");
+        const parentCommentUserSpan = document.getElementById("replyToUser");
+
+        replyButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const commentId = this.getAttribute("data-comment-id");
+                const commentUser = this.getAttribute("data-comment-user");
+
+                // hidden input に値をセット
+                parentCommentIdInput.value = commentId;
+                parentCommentUserSpan.textContent = commentUser;
+
+                // form の action を動的に変更
+                replyForm.action = `/bbs/reply/${commentId}/`;
+            });
+        });
+    });
+</script>
+
+{% endblock %}

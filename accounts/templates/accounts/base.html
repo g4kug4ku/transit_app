@@ -83,6 +83,14 @@
             max-width: 70%;
             clear: both;
         }
+        .reply-bubble {
+            background-color: #EB6100;
+            color: white;
+            border-radius: 15px;
+            padding: 10px;
+            max-width: 70%;
+            clear: both;
+        }
         .img-fluid {
             max-width: 100%;
             height: auto;
@@ -133,8 +141,9 @@
                 <li class="mb-3"><a href="{% url 'bento_reservation' %}" class="text-dark" style="text-decoration:none;">弁当予約</a></li>
                 <li class="mb-3"><a href="https://repo.transit-iko.net/" class="text-dark" style="text-decoration:none;" target="_blank" rel="noopener noreferrer">業務日誌</a></li>
                 <!-- <li><a href="{% url 'kakeibo_list' %}" class="text-dark">家計簿</a></li> -->
-                <li class="mb-4"><a href="{% url 'song_request_list' %}" class="text-dark" style="text-decoration:none;">曲をリクエスト</a></li>
-                <li><a href="{% url 'favorite_movies_list' %}" class="text-dark" style="text-decoration:none;">好きな映画トップ3</a></li>
+                <li class="mb-3"><a href="{% url 'song_request_list' %}" class="text-dark" style="text-decoration:none;">曲をリクエスト</a></li>
+                <li class="mb-3"><a href="{% url 'favorite_movies_list' %}" class="text-dark" style="text-decoration:none;">好きな映画トップ3</a></li>
+                <li class="mb-3"><a href="{% url 'bbs_top' %}" class="text-dark" style="text-decoration:none;">なんでも掲示板</a></li>
                 {% if user.is_staff %}  <!-- 管理者の場合のみ表示 -->
                 <hr>
                 <li class="mb-3"><a href="{% url 'admin_bento_reservation_list' %}" class="text-dark" style="text-decoration:none;">弁当予約者一覧</a></li>

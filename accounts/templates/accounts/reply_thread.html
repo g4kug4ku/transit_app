@@ -1,0 +1,21 @@
+{% for reply in replies %}
+    <div class="reply-list">
+        <hr>
+        <strong>{{ reply.parent_comment.user.last_name }} {{ reply.parent_comment.user.first_name }} ← {{ reply.user.last_name }} {{ reply.user.first_name }}</strong>
+        <span class="text-muted">{{ reply.created_at|date:"Y年m月d日 H:i" }}</span>
+        <p>{{ reply.content }}</p>
+
+        <!-- 返信ボタン -->
+        <a href="#" 
+            class="reply-button text-white" 
+            data-bs-toggle="modal" 
+            data-bs-target="#replyModal" 
+            data-comment-id="{{ reply.id }}"
+            data-comment-user="{{ reply.user.last_name }} {{ reply.user.first_name }}">
+            <i class="bi bi-reply"></i> 返信
+        </a>
+
+        <!-- さらに深い返信も「同じ階層」に配置 -->
+        {% include 'accounts/reply_thread.html' with replies=reply.replies.all %}
+    </div>
+{% endfor %}
