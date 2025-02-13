@@ -264,10 +264,29 @@ def receive_bento(request, reservation_id):
 
 def admin_bento_reservation_list(request):
     today = date.today()
+    # デフォルトの開始日は本日
+    default_start = today.strftime('%Y-%m-%d')
+
+    # GETパラメータに end_date がない場合は、まず明日を候補とする
+    if 'end_date' in request.GET:
+        default_end = request.GET.get('end_date')
+    else:
+        candidate_date = today + timedelta(days=1)
+        # 明日予約があれば明日をデフォルトにする
+        if BentoReservation.objects.filter(reservation_date=candidate_date).exists():
+            default_end = candidate_date.strftime('%Y-%m-%d')
+        else:
+            # 明日がなければ、本日より後の予約がある中で最も早い日を取得
+            next_reservation = BentoReservation.objects.filter(reservation_date__gt=today).order_by('reservation_date').first()
+            if next_reservation:
+                default_end = next_reservation.reservation_date.strftime('%Y-%m-%d')
+            else:
+                # もし本日以降予約がなければ、本日をデフォルトにする
+                default_end = today.strftime('%Y-%m-%d')
 
     # 日付文字列を取得またはデフォルト値を設定
-    start_date_str = request.GET.get('start_date', today.strftime('%Y-%m-%d'))
-    end_date_str = request.GET.get('end_date', today.strftime('%Y-%m-%d'))
+    start_date_str = request.GET.get('start_date', default_start)
+    end_date_str = request.GET.get('end_date', default_end)
 
     # 日付型に変換
     start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
