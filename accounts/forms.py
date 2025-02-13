@@ -240,3 +240,6 @@ class BBSCommentForm(forms.ModelForm):
     class Meta:
         model = BBSComment
         fields = ["content"]
+        labels = {
+            'content': '',  # ラベルを空にする
+        }
