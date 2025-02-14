@@ -125,7 +125,7 @@ class BentoReservationForm(forms.ModelForm):
         while previous_weekday.weekday() in [5, 6] or BentoUnavailableDay.objects.filter(date=previous_weekday).exists():
             previous_weekday -= timedelta(days=1)
 
-        reservation_deadline = timezone.make_aware(datetime.combine(previous_weekday, time(17, 0)))
+        reservation_deadline = timezone.make_aware(datetime.combine(previous_weekday, time(23, 0)))
 
         if reservation_date == next_weekday and current_datetime > reservation_deadline:
             raise ValidationError(f"{next_weekday.strftime('%Y-%m-%d')} の予約は {previous_weekday.strftime('%Y-%m-%d')} の17時までです。")
