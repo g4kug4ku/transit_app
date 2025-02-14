@@ -24,7 +24,14 @@
 
 <!-- 予約内容の表示 -->
 {% for date, reservations in reservations_by_date.items %}
-    <h3>{{ date|date:"Y年m月d日" }}</h3>
+    <h3>
+        {{ date|date:"Y年m月d日" }}
+        {% if date == today_date %}
+            (本日)
+        {% elif date == next_date %}
+            (次回)
+        {% endif %}
+    </h3>
     {% if reservations %}
         <ul>
             <li>おかずの数: {{ side_dish_counts|get_item:date }}</li>

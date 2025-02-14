@@ -182,3 +182,23 @@ class FavoriteMoviesComment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user.username} on {self.favorite_movies}"
+
+#bbs
+class BBSPost(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bbs_posts")
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+   
+    def __str__(self):
+        return self.title
+
+class BBSComment(models.Model):
+    post = models.ForeignKey(BBSPost, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.content[:20]}"

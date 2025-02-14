@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm, SongRequestForm, FavoriteMoviesForm, FavoriteMoviesCommentForm
-from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry, SongRequest, FavoriteMovies, FavoriteMoviesComment
+from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm, SongRequestForm, FavoriteMoviesForm, FavoriteMoviesCommentForm, BBSPostForm, BBSCommentForm
+from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry, SongRequest, FavoriteMovies, FavoriteMoviesComment, BBSPost, BBSComment
 from django.urls import resolve, reverse
 from .utils import decode_filename
 from django.contrib import messages
@@ -55,6 +55,19 @@ def index(request):
         created_at__gte=one_day_ago, 
         favorite_movies__user=request.user  # 自分の投稿へのコメント
     ).exclude(user=request.user)  # 自分が投稿したコメントは除外
+    # なんでも掲示板
+    new_bbs = BBSPost.objects.filter(created_at__gte=one_day_ago).exclude(user=request.user)
+    # 自分の掲示板へのコメント
+    recent_bbs_comments = BBSComment.objects.filter(
+        created_at__gte=one_day_ago,
+        post__user=request.user,
+        parent_comment=None
+    ).exclude(user=request.user)
+    # **自分のコメントに対する返信**
+    recent_bbs_replies = BBSComment.objects.filter(
+        created_at__gte=one_day_ago,
+        parent_comment__user=request.user  # 自分のコメントが親コメント
+    ).exclude(user=request.user)  # 自分自身の返信は除外
     # 新着情報を1つのリストにまとめる
     recent_updates = []
     for movie in new_movies:
@@ -81,6 +94,32 @@ def index(request):
             'title': f"{comment.user.last_name} {comment.user.first_name}さんがあなたの好きな映画にコメントしました",
             'url': link,
             'created_at': comment.created_at,
+        })
+    
+    for bbs in new_bbs:
+        recent_updates.append({
+            "type": "bbs",
+            "title": f"{bbs.user.last_name} {bbs.user.first_name}さんが掲示板に投稿しました",
+            "url":reverse("bbs_detail", args=[bbs.pk]),
+            "created_at":bbs.created_at,
+        })
+    
+    for bbs_comment in recent_bbs_comments:
+        link = reverse('bbs_detail', args=[bbs_comment.post.id])
+        print(f"Generated link: {link}") 
+        recent_updates.append({
+            "type": "bbs_comment",
+            "title": f"{bbs_comment.user.last_name} {bbs_comment.user.first_name}さんがあなたの掲示板にコメントしました",
+            "url": link,
+            "created_at": bbs_comment.created_at,
+        })
+    
+    for reply in recent_bbs_replies:
+        recent_updates.append({
+            "type": "bbs_reply",
+            "title": f"{reply.user.last_name} {reply.user.first_name}さんがあなたのコメントに返信しました",
+            "url": reverse('bbs_detail', args=[reply.post.id]),
+            "created_at": reply.created_at,
         })
 
     # 作成日時で並べ替え
@@ -225,37 +264,49 @@ def receive_bento(request, reservation_id):
 
 def admin_bento_reservation_list(request):
     today = date.today()
+    # computed_today: 管理者が画面を見ている日の基準
+    computed_today = today
 
-    # 日付文字列を取得またはデフォルト値を設定
-    start_date_str = request.GET.get('start_date', today.strftime('%Y-%m-%d'))
-    end_date_str = request.GET.get('end_date', today.strftime('%Y-%m-%d'))
+    # computed_next: 本日翌日が予約されていればその日、なければ本日以降で最も早い予約日、なければ本日
+    candidate_date = today + timedelta(days=1)
+    if BentoReservation.objects.filter(reservation_date=candidate_date).exists():
+        computed_next = candidate_date
+    else:
+        next_reservation = BentoReservation.objects.filter(reservation_date__gt=today).order_by('reservation_date').first()
+        computed_next = next_reservation.reservation_date if next_reservation else today
 
-    # 日付型に変換
+    # GETパラメータがあればそれを使うが、ラベル表示は computed_today, computed_next で行う
+    default_start = today.strftime('%Y-%m-%d')
+    if 'end_date' in request.GET:
+        default_end = request.GET.get('end_date')
+    else:
+        default_end = computed_next.strftime('%Y-%m-%d')
+
+    start_date_str = request.GET.get('start_date', default_start)
+    end_date_str = request.GET.get('end_date', default_end)
+
     start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
     end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
 
-    # 日付ごとの予約データを作成
     reservations_by_date = {}
     for n in range((end_date - start_date).days + 1):
         current_date = start_date + timedelta(n)
         reservations = BentoReservation.objects.filter(reservation_date=current_date)
-        if reservations.exists():  # 予約が存在する日付のみ追加
+        if reservations.exists():
             reservations_by_date[current_date] = reservations
 
-    # 各日の予約集計
     side_dish_counts = {}
     rice_100g_counts = {}
     rice_160g_counts = {}
     rice_200g_counts = {}
 
-    if reservations_by_date:  # データが存在する場合のみ処理
+    if reservations_by_date:
         for current_date, reservations in reservations_by_date.items():
             side_dish_counts[current_date] = reservations.filter(side_dish=True).count()
             rice_100g_counts[current_date] = reservations.filter(rice=True, rice_gram=100).count()
             rice_160g_counts[current_date] = reservations.filter(rice=True, rice_gram=160).count()
             rice_200g_counts[current_date] = reservations.filter(rice=True, rice_gram=200).count()
 
-    # テンプレートへデータを渡す
     return render(request, 'admin/admin_bento_reservation_list.html', {
         'reservations_by_date': reservations_by_date,
         'start_date': start_date_str,
@@ -264,6 +315,8 @@ def admin_bento_reservation_list(request):
         'rice_100g_counts': rice_100g_counts,
         'rice_160g_counts': rice_160g_counts,
         'rice_200g_counts': rice_200g_counts,
+        'today_date': computed_today,      # ラベル用：本日
+        'next_date': computed_next,          # ラベル用：次回
     })
 
 def export_bento_reservations(request):
@@ -604,3 +657,98 @@ def favorite_movies_delete(request, pk):
         return HttpResponseRedirect(reverse('favorite_movies_list'))
     else:
         return HttpResponseRedirect(reverse('favorite_movies_list'))  # 不正な削除試行時のリダイレクト先
+
+#bbs
+# なんでも掲示板トップ
+def bbs_top(request):
+    posts = BBSPost.objects.all().order_by("-created_at")
+    return render(request, "accounts/bbs_top.html", {"posts": posts})
+
+# 新規投稿
+@login_required
+def new_bbs_post(request):
+    if request.method == "POST":
+        form = BBSPostForm(request.POST)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user
+            post.save()
+            return redirect("bbs_top")
+    else:
+        form = BBSPostForm()
+    return render(request, "accounts/new_bbs.html", {"form": form})
+
+# 投稿詳細
+@login_required
+def bbs_detail(request, pk):
+    bbs_post = get_object_or_404(BBSPost, pk=pk)
+    comment_form = BBSCommentForm()
+    reply_form = BBSCommentForm()
+
+    # 親コメントのみ取得（`parent_comment=None` のものだけ）
+    comments = BBSComment.objects.filter(post=bbs_post, parent_comment=None).order_by("created_at")
+
+    if request.method == "POST":
+        form = BBSCommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.user = request.user
+            comment.post = bbs_post
+            comment.save()
+            return redirect('bbs_detail', pk=pk)
+
+    return render(request, 'accounts/bbs_detail.html', {
+        'bbs_post': bbs_post,
+        'comments': comments,  # 修正
+        'comment_form': comment_form,
+        'reply_form': reply_form,
+    })
+
+# 投稿削除
+@login_required
+def delete_bbs_post(request, pk):
+    post = get_object_or_404(BBSPost, pk=pk, user=request.user)
+    post.delete()
+    return redirect("bbs_top")
+
+# コメント投稿
+@login_required
+def add_bbs_comment(request, pk):
+    post = get_object_or_404(BBSPost, pk=pk)
+    if request.method == "POST":
+        form = BBSCommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.user = request.user
+            comment.post = post
+            comment.save()
+    return redirect("bbs_detail", pk=pk)
+
+# 返信投稿
+@login_required
+def bbs_reply(request, pk):
+    print(f"Received pk: {pk}")  # pk の確認
+
+    # まず、フィルタでオブジェクトが取得できるか確認
+    comment_query = BBSComment.objects.filter(pk=pk)
+    print(f"Queryset count: {comment_query.count()}")  # 該当オブジェクトの数を確認
+
+    if not comment_query.exists():
+        print("Comment not found in filter!")  # もし取得できなければ表示
+        return HttpResponse("Comment not found in filter", status=404)
+
+    parent_comment = get_object_or_404(BBSComment, pk=pk)
+    print(f"Found parent_comment: {parent_comment.id}")  # ここでエラーになるか確認
+
+    if request.method == "POST":
+        content = request.POST.get("content")
+        new_reply = BBSComment.objects.create(
+            post=parent_comment.post,
+            user=request.user,
+            content=content,
+            parent_comment=parent_comment
+        )
+        
+        
+        
+        return redirect("bbs_detail", pk=parent_comment.post.pk)

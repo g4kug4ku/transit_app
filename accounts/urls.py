@@ -27,4 +27,10 @@ urlpatterns = [
     path('favorite_movies/new/', views.favorite_movies_create, name='favorite_movies_create'),
     path('favorite_movies/<int:pk>/', views.favorite_movies_detail, name='favorite_movies_detail'),
     path('favorite_movies/<int:pk>/delete/', views.favorite_movies_delete, name='favorite_movies_delete'),
+    path("bbs/", views.bbs_top, name="bbs_top"),
+    path("bbs/new/", views.new_bbs_post, name="new_bbs_post"),
+    path("bbs/<int:pk>/", views.bbs_detail, name="bbs_detail"),
+    path("bbs/<int:pk>/delete/", views.delete_bbs_post, name="delete_bbs_post"),
+    path("bbs/<int:pk>/comment/", views.add_bbs_comment, name="add_bbs_comment"),
+    path('bbs/reply/<int:pk>/', views.bbs_reply, name='bbs_reply'),
 ]

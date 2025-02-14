@@ -1,0 +1,22 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'bbs_top' %}" class="btn btn-secondary mb-3">← なんでも掲示板へ戻る</a>
+
+    <h2 class="mb-3">新規投稿</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_title" class="form-label">タイトル</label>
+            <input type="text" name="title" id="id_title" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="id_content" class="form-label">本文</label>
+            <textarea name="content" id="id_content" class="form-control" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">投稿</button>
+    </form>
+</div>
+{% endblock %}
