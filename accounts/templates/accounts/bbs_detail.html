@@ -7,7 +7,7 @@
     <!-- 投稿詳細 -->
     <div class="card">
         <div class="card-body">
-            <h3 class="card-title">{{ bbs_post.title }}</h3>  <!-- タイトル表示 -->
+            <h3 class="card-title">{{ bbs_post.title }} -{{ bbs_post.user.last_name }} {{ bbs_post.user.first_name }}</h3>  <!-- タイトル表示 -->
             <p class="card-text"><small class="text-muted">
                 {{ bbs_post.created_at|date:"Y年m月d日 H:i" }}  <!-- 投稿日時 -->
             </small></p>
