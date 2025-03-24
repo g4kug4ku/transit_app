@@ -13,17 +13,36 @@
     </p>
 
     <!-- リクエストフォーム -->
-    <div class="row g-2 mb-4">
-        <div class="col-md-4">
-            <input type="text" id="artist" class="form-control" placeholder="アーティスト名">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_artist" class="form-label">アーティスト名</label>
+            {{ form.artist }}
         </div>
-        <div class="col-md-4">
-            <input type="text" id="song_name" class="form-control" placeholder="曲名">
+        <div class="mb-3">
+            <label for="id_song_name" class="form-label">曲名</label>
+            {{ form.song_name }}
+            {% if form.song_name.errors %}
+                <div class="text-danger">{{ form.song_name.errors }}</div>
+            {% endif %}
         </div>
-        <div class="col-md-4">
-            <button id="request-button" class="btn btn-primary w-100">リクエスト</button>
-        </div>
-    </div>
+        <button id="request-button" type="submit" class="btn btn-primary">リクエスト</button>
+    </form>
+
+    {% if user.is_superuser %}
+        <form method="post" action="{% url 'delete_all_song_requests' %}" onsubmit="return confirm('本当にすべてのリクエストを削除しますか？');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">すべてのリクエストを削除</button>
+        </form>
+    {% endif %}
 
     <!-- リクエスト一覧 -->
     <h3>リクエスト一覧</h3>
@@ -40,11 +59,9 @@
                     <p class="card-text">リクエスト者: {{ request.user.last_name }} {{ request.user.first_name }}</p>
                     <button class="btn btn-outline-danger like-button" data-id="{{ request.id }}">
                         <i class="bi {% if user in request.likes.all %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
-                        <span class="like-count">{{ request.like_count }}</span>
+                        <span class="like-count">{{ request.likes.count }}</span>  <!-- 修正: 正しいカウント表示 -->
                     </button>
-                    {% if request.user == user %}
-                        <button class="btn btn-danger delete-button" data-id="{{ request.id }}">削除</button>
-                    {% endif %}
+                    
                 </div>
             </div>
         {% endfor %}
@@ -102,6 +119,7 @@
                 fetch(`/song_request/${requestId}/like/`, {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     }
                 })

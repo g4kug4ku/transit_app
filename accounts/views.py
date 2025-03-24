@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import SignUpForm, CommentForm, BentoReservationForm, MenuUploadForm, KakeiboForm, SongRequestForm, FavoriteMoviesForm, FavoriteMoviesCommentForm, BBSPostForm, BBSCommentForm
 from .models import Post, Comment, BentoReservation, BentoUnavailableDay, User, MenuUpload, KakeiboEntry, SongRequest, FavoriteMovies, FavoriteMoviesComment, BBSPost, BBSComment
 from django.urls import resolve, reverse
@@ -555,12 +555,32 @@ def kakeibo_delete(request, pk):
 @login_required
 def song_request_list(request):
     sort = request.GET.get('sort', 'date')  # デフォルトは日付順
+
     if sort == 'likes':
         requests = SongRequest.objects.annotate(like_count=Count('likes')).order_by('-like_count')
     else:
         requests = SongRequest.objects.order_by('-request_date')
-    return render(request, 'accounts/song_request_list.html', {'requests': requests, 'sort': sort})
 
+    # フォーム処理を追加（既存のソート処理は変更しない）
+    if request.method == "POST":
+        form = SongRequestForm(request.POST)
+        if form.is_valid():
+            song_request = form.save(commit=False)  # 一旦保存を保留
+            song_request.user = request.user  # ログインユーザーをセット
+            song_request.save()  # ユーザー情報を追加した後に保存
+            messages.success(request, "リクエストが送信されました！")
+            return redirect("song_request_list")
+        else:
+            messages.error(request, "リクエストに失敗しました。入力を確認してください。")
+    else:
+        form = SongRequestForm()
+
+    return render(request, 'accounts/song_request_list.html', {
+        'requests': requests,
+        'sort': sort,
+        'form': form,  # フォームをテンプレートに渡す
+    })
+    
 @login_required
 @csrf_exempt  # AJAXリクエスト用
 def song_request_create(request):
@@ -588,14 +608,14 @@ def song_request_create(request):
 @login_required
 def toggle_like(request, request_id):
     if request.method == 'POST':
+        print(f"User {request.user} is liking/unliking request {request_id}")  # デバッグ
         song_request = get_object_or_404(SongRequest, id=request_id)
-        if request.user in song_request.likes.all():
+        if song_request.likes.filter(id=request.user.id).exists():
             song_request.likes.remove(request.user)
             liked = False
         else:
             song_request.likes.add(request.user)
             liked = True
-        song_request.save()
         return JsonResponse({'liked': liked, 'like_count': song_request.likes.count()})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -604,6 +624,17 @@ def delete_song_request(request, request_id):
     song_request = get_object_or_404(SongRequest, id=request_id, user=request.user)
     song_request.delete()
     return JsonResponse({'success': True})
+
+# 管理者のみがアクセスできるデコレーター
+def admin_required(user):
+    return user.is_superuser
+
+@user_passes_test(admin_required)
+def delete_all_song_requests(request):
+    if request.method == "POST":
+        SongRequest.objects.all().delete()
+        messages.success(request, "すべての曲のリクエストを削除しました。")
+    return redirect("song_request_list")  
 
 #映画
 @login_required

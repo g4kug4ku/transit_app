@@ -204,6 +204,12 @@ class SongRequestForm(forms.ModelForm):
             'song_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '曲名'}),
         }
 
+    def clean_song_name(self):
+        song_name = self.cleaned_data.get('song_name')
+        if SongRequest.objects.filter(song_name=song_name).exists():
+            raise forms.ValidationError("すでにこの曲はリクエストされています。")
+        return song_name
+    
 #映画
 class FavoriteMoviesForm(forms.ModelForm):
     class Meta:
