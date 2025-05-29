@@ -8,7 +8,7 @@
         <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form.as_p }}
-
+            <small class="text-muted">※ ファイルまたは画像URLのどちらか一方を入力してください。</small>
             <button type="submit" class="btn btn-primary" id="upload-btn" disabled>アップロード</button>
         </form>
 
@@ -17,7 +17,13 @@
         <ul class="list-group">
             {% for menu in menus %}
                 <li class="list-group-item">
-                    {{ menu.title }}
+                    {% if menu.url %}
+                        <a href="{{ menu.url }}" target="_blank">{{ menu.title }}</a>
+                    {% elif menu.file %}
+                        <a href="{{ menu.file.url }}" target="_blank">{{ menu.title }}</a>
+                    {% else %}
+                        {{ menu.title }}（リンクなし）
+                    {% endif %}
                     <a href="{% url 'delete_menu' menu.id %}" class="btn btn-danger btn-sm float-end">削除</a>
                 </li>
             {% empty %}
@@ -27,22 +33,27 @@
     </div>
 
     <script>
-        // タイトルとファイルが選択されていないとボタンを無効にする
         document.addEventListener('DOMContentLoaded', function () {
             const uploadBtn = document.getElementById('upload-btn');
             const titleInput = document.getElementById('id_title');
             const fileInput = document.getElementById('id_file');
+            const urlInput = document.getElementById('id_url');  // URLフィールドを取得
 
             function toggleButton() {
-                if (titleInput.value && fileInput.files.length > 0) {
-                    uploadBtn.disabled = false;
-                } else {
-                    uploadBtn.disabled = true;
-                }
+                const hasTitle = titleInput.value.trim() !== '';
+                const hasFile = fileInput.files.length > 0;
+                const hasURL = urlInput && urlInput.value.trim() !== '';
+
+                uploadBtn.disabled = !(hasTitle && (hasFile || hasURL));
             }
 
             titleInput.addEventListener('input', toggleButton);
             fileInput.addEventListener('change', toggleButton);
+            if (urlInput) {
+                urlInput.addEventListener('input', toggleButton);
+            }
+
+            toggleButton();  // 初期状態でもチェック
         });
     </script>
 {% endblock %}

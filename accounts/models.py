@@ -108,6 +108,7 @@ class BentoUnavailableDay(models.Model):
 class MenuUpload(models.Model):
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='menus/')
+    url = models.URLField(blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -170,7 +171,7 @@ class FavoriteMovies(models.Model):
     rank_1 = models.CharField(max_length=255, verbose_name="第1位の映画")
     reason_1 = models.TextField(verbose_name="第1位の理由")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f"{self.user.username}'s Favorite Movies"
 
@@ -189,7 +190,7 @@ class BBSPost(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-   
+
     def __str__(self):
         return self.title
 

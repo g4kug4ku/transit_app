@@ -140,13 +140,22 @@ class BentoReservationForm(forms.ModelForm):
 class MenuUploadForm(forms.ModelForm):
     class Meta:
         model = MenuUpload
-        fields = ['title', 'file']
+        fields = ['title', 'file', 'url']
 
-    def clean_file(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['file'].required = False
+        self.fields['url'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
         file = self.cleaned_data.get('file')
-        if not file:
-            raise forms.ValidationError("ファイルを選択してください。")
-        return file
+        url = cleaned_data.get('url')
+        if not file and not url:
+            raise forms.ValidationError("ファイルまたはURLのどちらかを入力してください。")
+        if file and url:
+            raise forms.ValidationError("ファイルとURLは同時に指定できません。どちらか一方にしてください。")
+        return cleaned_data
 
 #家計簿
 class KakeiboForm(forms.ModelForm):
@@ -209,7 +218,7 @@ class SongRequestForm(forms.ModelForm):
         if SongRequest.objects.filter(song_name=song_name).exists():
             raise forms.ValidationError("すでにこの曲はリクエストされています。")
         return song_name
-    
+
 #映画
 class FavoriteMoviesForm(forms.ModelForm):
     class Meta:

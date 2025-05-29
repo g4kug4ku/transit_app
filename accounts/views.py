@@ -52,7 +52,7 @@ def index(request):
     new_requests = SongRequest.objects.filter(request_date__gte=one_day_ago)
     # 自分の好きな映画への新しいコメント
     recent_favorite_movie_comments = FavoriteMoviesComment.objects.filter(
-        created_at__gte=one_day_ago, 
+        created_at__gte=one_day_ago,
         favorite_movies__user=request.user  # 自分の投稿へのコメント
     ).exclude(user=request.user)  # 自分が投稿したコメントは除外
     # なんでも掲示板
@@ -77,7 +77,7 @@ def index(request):
             "url": reverse("favorite_movies_detail", args=[movie.pk]),
             "created_at": movie.created_at,
         })
-    
+
     for requests in new_requests:
         recent_updates.append({
             "type": "song_request",
@@ -85,17 +85,17 @@ def index(request):
             "url": reverse("song_request_list"),
             "created_at": requests.request_date,
         })
-    
+
     for comment in recent_favorite_movie_comments:
         link = reverse('favorite_movies_detail', args=[comment.favorite_movies.id])
-        print(f"Generated link: {link}") 
+        print(f"Generated link: {link}")
         recent_updates.append({
             'type': 'comment',
             'title': f"{comment.user.last_name} {comment.user.first_name}さんがあなたの好きな映画にコメントしました",
             'url': link,
             'created_at': comment.created_at,
         })
-    
+
     for bbs in new_bbs:
         recent_updates.append({
             "type": "bbs",
@@ -103,17 +103,17 @@ def index(request):
             "url":reverse("bbs_detail", args=[bbs.pk]),
             "created_at":bbs.created_at,
         })
-    
+
     for bbs_comment in recent_bbs_comments:
         link = reverse('bbs_detail', args=[bbs_comment.post.id])
-        print(f"Generated link: {link}") 
+        print(f"Generated link: {link}")
         recent_updates.append({
             "type": "bbs_comment",
             "title": f"{bbs_comment.user.last_name} {bbs_comment.user.first_name}さんがあなたの掲示板にコメントしました",
             "url": link,
             "created_at": bbs_comment.created_at,
         })
-    
+
     for reply in recent_bbs_replies:
         recent_updates.append({
             "type": "bbs_reply",
@@ -124,7 +124,7 @@ def index(request):
 
     # 作成日時で並べ替え
     recent_updates.sort(key=lambda x: x["created_at"], reverse=True)
-    
+
     return render(request, 'accounts/index.html', {
         'posts': posts,
         'recent_updates': recent_updates,
@@ -205,14 +205,16 @@ def bento_reservation(request):
         form = BentoReservationForm(request=request)  # GETリクエスト時もrequestを渡す
 
 
-    latest_menu = MenuUpload.objects.last()
+    menus = MenuUpload.objects.order_by('uploaded_at')
 
     # 献立が存在し、PDFかどうかをチェック
-    is_pdf = False
-    if latest_menu and latest_menu.file.url.endswith(".pdf"):
-        is_pdf = True
+    for menu in menus:
+        if menu.file and str(menu.file).lower().endswith(".pdf"):
+            menu.is_pdf = True
+        else:
+            menu.is_pdf = False
 
-    return render(request, 'accounts/bento_reservation.html', {'form': form, 'latest_menu': latest_menu, 'is_pdf': is_pdf})
+    return render(request, 'accounts/bento_reservation.html', {'form': form, 'menus': menus})
 
 @login_required
 def reservation_list(request):
@@ -454,11 +456,17 @@ def upload_menu(request):
 @login_required
 def delete_menu(request, menu_id):
     menu = get_object_or_404(MenuUpload, id=menu_id)
-    file_path = os.path.join(settings.MEDIA_ROOT, str(menu.file))
+
+    # ファイルが存在する場合のみファイルパスを生成・削除
+    if menu.file and menu.file.name:
+        file_path = os.path.join(settings.MEDIA_ROOT, menu.file.name)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except PermissionError:
+                messages.warning(request, 'ファイルの削除に失敗しました。アクセス権限をご確認ください。')
+
     menu.delete()
-    # ファイルが存在する場合は削除
-    if os.path.exists(file_path):
-        os.remove(file_path)
     messages.success(request, '献立が削除されました。')
     return redirect('upload_menu')
 
@@ -580,7 +588,7 @@ def song_request_list(request):
         'sort': sort,
         'form': form,  # フォームをテンプレートに渡す
     })
-    
+
 @login_required
 @csrf_exempt  # AJAXリクエスト用
 def song_request_create(request):
@@ -634,7 +642,7 @@ def delete_all_song_requests(request):
     if request.method == "POST":
         SongRequest.objects.all().delete()
         messages.success(request, "すべての曲のリクエストを削除しました。")
-    return redirect("song_request_list")  
+    return redirect("song_request_list")
 
 #映画
 @login_required
@@ -779,7 +787,7 @@ def bbs_reply(request, pk):
             content=content,
             parent_comment=parent_comment
         )
-        
-        
-        
+
+
+
         return redirect("bbs_detail", pk=parent_comment.post.pk)
