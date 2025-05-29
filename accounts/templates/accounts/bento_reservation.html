@@ -2,14 +2,16 @@
 
 {% block content %}
 <div class="container mt-5">
-    <!-- 献立リンク -->
-    {% if menus %}
-        <div class="mb-3">
+    <div class="d-flex justify-content-center align-items-center position-relative mb-4" style="min-height: 3.5rem;">
+        <h1 class="m-0">-弁当予約-</h1>
+        {% if menus %}
             {% for menu in menus %}
                 {% if menu.url %}
-                    <div class="mb-2">
-                        <a href="{{ menu.url }}" target="_blank">{{ menu.title }}</a>
-                    </div>
+                    <a href="{{ menu.url }}" target="_blank"
+                        class="btn btn-outline-primary position-absolute"
+                        style="right: 0; top: 50%; transform: translateY(-50%); height: auto;">
+                        {{ menu.title }}
+                    </a>
                 {% elif menu.file %}
                     {% if menu.is_pdf %}
                         <embed src="{{ menu.file.url }}" width="100%" height="400px" type="application/pdf">
@@ -18,9 +20,8 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
-        </div>
-    {% endif %}
-    <h1 class="text-center">-弁当予約-</h1>
+        {% endif %}
+    </div>
     <p class="fst-italic" style="margin-bottom: 20px; color: #EB6100;">
         お弁当の予約は前日の17時までです。
     </p>
